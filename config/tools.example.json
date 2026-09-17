@@ -1,0 +1,62 @@
+{
+  "tools": [
+    {
+      "id": "leitor-pdf-poligonal",
+      "name": "Leitor PDF Extrato Mensal — Poligonal",
+      "description": "Lê os extratos mensais em PDF e gera a planilha XLSX usada na automação do FGTS.",
+      "category": "FGTS",
+      "kind": "html",
+      "target": "%USERPROFILE%\\Desktop\\GitHub\\Leitor_PDF_Extrato_Mensal_Poligonal\\index.html",
+      "status": "Etapa 1 de 2",
+      "icon": "PDF",
+      "workflow": "fgts-poligonal",
+      "step": 1,
+      "documentation": "https://github.com/cezararc-maker/Leitor_PDF_Extrato_Mensal_Poligonal"
+    },
+    {
+      "id": "fgts-obra-poligonal",
+      "name": "FGTS por Obra / Poligonal",
+      "description": "Importa a planilha produzida pelo Leitor PDF e executa a automação por obra.",
+      "category": "FGTS",
+      "kind": "batch",
+      "target": "%USERPROFILE%\\Desktop\\GitHub\\FGTS_por_obra_poligonal\\scripts\\executar.bat",
+      "status": "Etapa 2 de 2",
+      "icon": "FGTS",
+      "workflow": "fgts-poligonal",
+      "step": 2,
+      "documentation": "https://github.com/cezararc-maker/FGTS_por_obra_poligonal"
+    },
+    {
+      "id": "organizador-conectividade",
+      "name": "Organizador de Extrato Conectividade",
+      "description": "Organiza os dados extraídos dos arquivos da Conectividade Social.",
+      "category": "FGTS",
+      "kind": "html",
+      "target": "%USERPROFILE%\\Desktop\\GitHub\\organizador_extrato_conectividade\\dist\\Organizador_FGTS_Caixa_V2.html",
+      "status": "Finalizado",
+      "icon": "XLS"
+    },
+    {
+      "id": "pendencias-receita",
+      "name": "Pendências Fiscais Receita",
+      "description": "Consulta e organiza pendências fiscais para acompanhamento.",
+      "category": "Fiscal",
+      "kind": "batch",
+      "target": "%USERPROFILE%\\Desktop\\GitHub\\pendecia_fiscal_receita\\scripts\\iniciar-consulta.bat",
+      "status": "Em desenvolvimento",
+      "icon": "RFB",
+      "documentation": "https://github.com/cezararc-maker/pendecia_fiscal_receita"
+    },
+    {
+      "id": "controle-folha",
+      "name": "Controle da Folha de Pagamento",
+      "description": "Abre a planilha de controle e conferência da folha.",
+      "category": "Folha",
+      "kind": "file",
+      "target": "%USERPROFILE%\\Desktop\\GitHub\\Controle_Folha_de_Pagamento\\entrada\\Controle_Folha.xlsm",
+      "status": "Em desenvolvimento",
+      "icon": "FOL",
+      "documentation": "https://github.com/cezararc-maker/Controle_Folha_de_Pagamento"
+    }
+  ]
+}
