@@ -1,10 +1,11 @@
 @echo off
 setlocal
 cd /d "%~dp0.."
-if not exist ".venv\Scripts\python.exe" (
+if not exist ".venv\Scripts\pythonw.exe" (
   echo Ambiente nao encontrado. Execute scripts\instalar.ps1 primeiro.
   pause
   exit /b 1
 )
-".venv\Scripts\python.exe" -m dp_ferramentas
+start "" ".venv\Scripts\pythonw.exe" -m dp_ferramentas
 endlocal
+exit /b 0
