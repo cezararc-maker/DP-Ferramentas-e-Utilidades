@@ -50,8 +50,9 @@ class ToolCard(QFrame):
         description.setWordWrap(True)
         layout.addWidget(description)
         layout.addStretch()
-        availability = QLabel("Disponível neste computador" if target_exists(tool) else "Caminho ainda não localizado")
-        availability.setObjectName("available" if target_exists(tool) else "missing")
+        available = target_exists(tool)
+        availability = QLabel("Disponível neste computador" if available else "Caminho ainda não localizado")
+        availability.setObjectName("available" if available else "missing")
         layout.addWidget(availability)
         actions = QHBoxLayout()
         doc = QPushButton("Documentação")
@@ -65,33 +66,51 @@ class ToolCard(QFrame):
         layout.addLayout(actions)
 
 
-class WorkflowPanel(QFrame):
+class WorkflowSuggestion(QFrame):
     def __init__(self, tools: list[ToolDefinition], launch):
         super().__init__()
         self.setObjectName("workflow")
-        box = QVBoxLayout(self)
-        caption = QLabel("FLUXO INTEGRADO — FGTS POLIGONAL")
-        caption.setObjectName("eyebrow")
-        box.addWidget(caption)
-        title = QLabel("Um processo, duas ferramentas vinculadas")
+        layout = QVBoxLayout(self)
+        summary = QHBoxLayout()
+        labels = QVBoxLayout()
+        eyebrow = QLabel("SUGESTÃO DE FLUXO")
+        eyebrow.setObjectName("eyebrow")
+        labels.addWidget(eyebrow)
+        title = QLabel("FGTS Poligonal: use as duas ferramentas em sequência")
         title.setObjectName("workflowTitle")
-        box.addWidget(title)
-        note = QLabel("Primeiro gere a planilha XLSX no Leitor PDF. Depois importe essa planilha no FGTS por Obra / Poligonal.")
+        labels.addWidget(title)
+        summary.addLayout(labels, 1)
+        self.toggle = QPushButton("Ver etapas  ▼")
+        self.toggle.setObjectName("secondary")
+        self.toggle.clicked.connect(self.toggle_details)
+        summary.addWidget(self.toggle)
+        layout.addLayout(summary)
+        self.details = QWidget()
+        detail_layout = QVBoxLayout(self.details)
+        detail_layout.setContentsMargins(0, 8, 0, 0)
+        note = QLabel("Gere primeiro a planilha XLSX no Leitor PDF e depois importe-a no FGTS por Obra / Poligonal.")
         note.setWordWrap(True)
         note.setObjectName("description")
-        box.addWidget(note)
-        row = QHBoxLayout()
+        detail_layout.addWidget(note)
+        steps = QHBoxLayout()
         ordered = sorted(tools, key=lambda item: item.step or 0)
         for index, tool in enumerate(ordered):
             step = QPushButton(f"{tool.step}  {tool.name}")
             step.setObjectName("workflowButton")
             step.clicked.connect(lambda checked=False, current=tool: launch(current))
-            row.addWidget(step)
+            steps.addWidget(step)
             if index < len(ordered) - 1:
                 arrow = QLabel("→  XLSX  →")
                 arrow.setObjectName("flowArrow")
-                row.addWidget(arrow)
-        box.addLayout(row)
+                steps.addWidget(arrow)
+        detail_layout.addLayout(steps)
+        self.details.setVisible(False)
+        layout.addWidget(self.details)
+
+    def toggle_details(self) -> None:
+        visible = not self.details.isVisible()
+        self.details.setVisible(visible)
+        self.toggle.setText("Ocultar etapas  ▲" if visible else "Ver etapas  ▼")
 
 
 class MainWindow(QMainWindow):
@@ -99,6 +118,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.tools = load_tools()
         self.category = "Início"
+        self.dark_theme = True
         self.setWindowTitle("DP - Ferramentas & Utilidades")
         self.resize(1180, 760)
         root = QWidget()
@@ -118,6 +138,8 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(22, 26, 22, 22)
         brand = QLabel("DP")
         brand.setObjectName("brand")
+        brand.setFixedSize(52, 52)
+        brand.setAlignment(Qt.AlignCenter)
         layout.addWidget(brand)
         name = QLabel("Ferramentas\n& Utilidades")
         name.setObjectName("brandName")
@@ -133,7 +155,7 @@ class MainWindow(QMainWindow):
         config.setObjectName("secondary")
         config.clicked.connect(lambda: self.open_path(user_config_path()))
         layout.addWidget(config)
-        version = QLabel("Versão 0.1.0")
+        version = QLabel("Versão 0.2.0")
         version.setObjectName("muted")
         layout.addWidget(version)
         return sidebar
@@ -142,31 +164,52 @@ class MainWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(34, 28, 34, 24)
+        header = QHBoxLayout()
+        titles = QVBoxLayout()
         heading = QLabel("DP - Ferramentas & Utilidades")
         heading.setObjectName("heading")
-        layout.addWidget(heading)
+        titles.addWidget(heading)
         subtitle = QLabel("Sua central de automações do Departamento Pessoal")
         subtitle.setObjectName("description")
-        layout.addWidget(subtitle)
+        titles.addWidget(subtitle)
+        header.addLayout(titles, 1)
+        self.theme_button = QPushButton("☀  Tema claro")
+        self.theme_button.setObjectName("themeButton")
+        self.theme_button.clicked.connect(self.toggle_theme)
+        header.addWidget(self.theme_button)
+        layout.addLayout(header)
         self.search = QLineEdit()
         self.search.setPlaceholderText("Pesquisar ferramenta...")
         self.search.textChanged.connect(self.refresh_cards)
         layout.addWidget(self.search)
-        workflow_tools = [tool for tool in self.tools if tool.workflow == "fgts-poligonal"]
-        if workflow_tools:
-            layout.addWidget(WorkflowPanel(workflow_tools, self.launch))
-        self.section_title = QLabel("Todas as ferramentas")
-        self.section_title.setObjectName("sectionTitle")
-        layout.addWidget(self.section_title)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_layout.setContentsMargins(0, 4, 8, 8)
+        workflow_tools = [tool for tool in self.tools if tool.workflow == "fgts-poligonal"]
+        if workflow_tools:
+            self.scroll_layout.addWidget(WorkflowSuggestion(workflow_tools, self.launch))
+        self.section_title = QLabel("Todas as ferramentas")
+        self.section_title.setObjectName("sectionTitle")
+        self.scroll_layout.addWidget(self.section_title)
         self.card_host = QWidget()
         self.grid = QGridLayout(self.card_host)
+        self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setSpacing(16)
-        scroll.setWidget(self.card_host)
+        self.scroll_layout.addWidget(self.card_host)
+        self.scroll_layout.addStretch()
+        scroll.setWidget(scroll_content)
         layout.addWidget(scroll, 1)
         return page
+
+    def toggle_theme(self) -> None:
+        self.dark_theme = not self.dark_theme
+        app = QApplication.instance()
+        app.setStyleSheet(DARK_STYLE if self.dark_theme else LIGHT_STYLE)
+        self.theme_button.setText("☀  Tema claro" if self.dark_theme else "☾  Tema escuro")
 
     def select_category(self, category: str) -> None:
         self.category = category
@@ -182,7 +225,6 @@ class MainWindow(QMainWindow):
         visible = [tool for tool in self.tools if (self.category == "Início" or tool.category == self.category) and (not query or query in (tool.name + " " + tool.description).casefold())]
         for index, tool in enumerate(visible):
             self.grid.addWidget(ToolCard(tool, self.launch, self.documentation), index // 3, index % 3)
-        self.grid.setRowStretch((len(visible) + 2) // 3, 1)
 
     def launch(self, tool: ToolDefinition) -> None:
         try:
@@ -204,10 +246,10 @@ class MainWindow(QMainWindow):
         os.startfile(path)
 
 
-STYLE = """
+DARK_STYLE = """
 QWidget { background: #07111f; color: #e7eef7; font-family: 'Segoe UI'; font-size: 13px; }
 #sidebar { background: #0b1728; border-right: 1px solid #193047; }
-#brand { color: #07111f; background: #29d3c2; border-radius: 12px; font-size: 22px; font-weight: 800; padding: 9px; max-width: 30px; }
+#brand { color: #07111f; background: #29d3c2; border-radius: 13px; font-size: 20px; font-weight: 800; }
 #brandName { font-size: 19px; font-weight: 700; margin-top: 7px; }
 #heading { font-size: 28px; font-weight: 750; }
 #sectionTitle, #workflowTitle { font-size: 18px; font-weight: 700; }
@@ -215,7 +257,7 @@ QWidget { background: #07111f; color: #e7eef7; font-family: 'Segoe UI'; font-siz
 #eyebrow { color: #48e1d1; font-size: 11px; font-weight: 700; }
 QLineEdit { background: #0d1c2e; border: 1px solid #213b54; border-radius: 9px; padding: 11px; margin: 10px 0; }
 #toolCard { background: #0c192a; border: 1px solid #1d344c; border-radius: 12px; min-width: 235px; min-height: 210px; }
-#workflow { background: #10273b; border: 1px solid #28bcae; border-radius: 12px; padding: 9px; margin: 8px 0 10px 0; }
+#workflow { background: #10273b; border: 1px solid #28bcae; border-radius: 12px; padding: 7px; margin: 4px 0 10px 0; }
 #cardTitle { font-size: 15px; font-weight: 700; }
 #toolIcon { color: #48e1d1; font-weight: 800; background: #123049; border-radius: 8px; padding: 7px; }
 #status { color: #8ddbd3; background: #12352f; border-radius: 8px; padding: 4px 7px; font-size: 11px; }
@@ -224,10 +266,37 @@ QLineEdit { background: #0d1c2e; border: 1px solid #213b54; border-radius: 9px; 
 #flowArrow { color: #48e1d1; font-weight: 700; }
 QPushButton { background: #24bfae; color: #041315; border: 0; border-radius: 8px; padding: 9px 12px; font-weight: 650; }
 QPushButton:hover { background: #48e1d1; }
-#secondary, #nav { background: transparent; color: #c9d6e4; border: 1px solid #27435e; text-align: left; }
+#secondary, #nav, #themeButton { background: transparent; color: #c9d6e4; border: 1px solid #27435e; text-align: left; }
 #nav { border: 0; padding: 10px; }
-#nav:hover, #secondary:hover { background: #14283d; color: white; }
+#nav:hover, #secondary:hover, #themeButton:hover { background: #14283d; color: white; }
 #workflowButton { background: #17384d; color: #e7eef7; border: 1px solid #2b6271; text-align: left; }
+QScrollArea { background: transparent; }
+"""
+
+LIGHT_STYLE = """
+QWidget { background: #f4f7fa; color: #172333; font-family: 'Segoe UI'; font-size: 13px; }
+#sidebar { background: #ffffff; border-right: 1px solid #d9e2ea; }
+#brand { color: #ffffff; background: #087f73; border-radius: 13px; font-size: 20px; font-weight: 800; }
+#brandName { font-size: 19px; font-weight: 700; margin-top: 7px; }
+#heading { font-size: 28px; font-weight: 750; }
+#sectionTitle, #workflowTitle { font-size: 18px; font-weight: 700; }
+#description, #muted { color: #5d6d7e; }
+#eyebrow { color: #087f73; font-size: 11px; font-weight: 700; }
+QLineEdit { background: #ffffff; border: 1px solid #c7d3df; border-radius: 9px; padding: 11px; margin: 10px 0; }
+#toolCard { background: #ffffff; border: 1px solid #d7e0e8; border-radius: 12px; min-width: 235px; min-height: 210px; }
+#workflow { background: #e9f7f5; border: 1px solid #45a99e; border-radius: 12px; padding: 7px; margin: 4px 0 10px 0; }
+#cardTitle { font-size: 15px; font-weight: 700; }
+#toolIcon { color: #087f73; font-weight: 800; background: #dff3f0; border-radius: 8px; padding: 7px; }
+#status { color: #17695f; background: #d9f0e8; border-radius: 8px; padding: 4px 7px; font-size: 11px; }
+#available { color: #23805c; font-size: 11px; }
+#missing { color: #a86514; font-size: 11px; }
+#flowArrow { color: #087f73; font-weight: 700; }
+QPushButton { background: #087f73; color: white; border: 0; border-radius: 8px; padding: 9px 12px; font-weight: 650; }
+QPushButton:hover { background: #0a9b8d; }
+#secondary, #nav, #themeButton { background: transparent; color: #33475b; border: 1px solid #c5d1dc; text-align: left; }
+#nav { border: 0; padding: 10px; }
+#nav:hover, #secondary:hover, #themeButton:hover { background: #e5edf3; color: #111827; }
+#workflowButton { background: #ffffff; color: #1f3847; border: 1px solid #8fbeb8; text-align: left; }
 QScrollArea { background: transparent; }
 """
 
@@ -237,7 +306,7 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName(APP_FOLDER)
     app.setFont(QFont("Segoe UI", 10))
-    app.setStyleSheet(STYLE)
+    app.setStyleSheet(DARK_STYLE)
     window = MainWindow()
     window.show()
     return app.exec()
