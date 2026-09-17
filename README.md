@@ -2,24 +2,44 @@
 
 Aplicativo desktop para centralizar ferramentas, automações e documentos do Departamento Pessoal.
 
-## Estado atual
+## O que já funciona
 
-O repositório foi inicializado em 17/09/2026. O desenvolvimento ocorre em branch própria antes da validação no Windows.
+- painel desktop com pesquisa e categorias;
+- cartões que abrem projetos HTML, Python, executáveis, scripts, arquivos, pastas e páginas web;
+- indicação quando o caminho de uma ferramenta ainda não existe no computador;
+- fluxo visual integrado entre o Leitor PDF e o FGTS por Obra / Poligonal;
+- catálogo local personalizável e logs de execução.
 
-## Objetivo
-
-Disponibilizar uma central instalada no Windows capaz de:
-
-- abrir ferramentas HTML, Python, executáveis, planilhas e páginas web;
-- representar fluxos integrados entre projetos;
-- validar se cada ferramenta está disponível na máquina;
-- concentrar atalhos para documentação, logs e configurações;
-- preservar dados operacionais, certificados, credenciais, planilhas reais e relatórios somente no computador do usuário.
-
-## Primeiro fluxo integrado
+## Fluxo integrado — FGTS Poligonal
 
 1. **Leitor PDF Extrato Mensal — Poligonal** gera a planilha XLSX.
-2. **FGTS por Obra / Poligonal** importa a planilha e executa a emissão das guias.
+2. **FGTS por Obra / Poligonal** importa a planilha e continua a automação.
+
+## Testar no Windows
+
+Abra o PowerShell na pasta do projeto e execute:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\instalar.ps1
+.\scripts\executar.bat
+```
+
+Na primeira execução, o catálogo será copiado para:
+
+```text
+%APPDATA%\DP Ferramentas e Utilidades\tools.json
+```
+
+Edite esse arquivo para ajustar os caminhos reais das ferramentas sem alterar o código.
+
+## Gerar o executável
+
+```powershell
+.\scripts\build.ps1
+```
+
+O resultado ficará em `dist\DP_Ferramentas_Utilidades`.
 
 ## Ambiente previsto
 
