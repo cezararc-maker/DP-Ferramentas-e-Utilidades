@@ -1,6 +1,6 @@
 # DP - Ferramentas & Utilidades
 
-Aplicativo desktop para centralizar ferramentas, automações e documentos do Departamento Pessoal.
+Aplicativo desktop para centralizar ferramentas, automações, documentos e o acompanhamento dos projetos do Departamento Pessoal.
 
 ## O que já funciona
 
@@ -8,11 +8,29 @@ Aplicativo desktop para centralizar ferramentas, automações e documentos do De
 - cartões que abrem projetos HTML, Python, executáveis, scripts, arquivos, pastas e páginas web;
 - indicação quando o caminho de uma ferramenta ainda não existe no computador;
 - fluxo visual integrado entre o Leitor PDF e o FGTS por Obra / Poligonal;
-- catálogo local personalizável e logs de execução.
+- catálogo local personalizável e logs de execução;
+- tema claro/escuro;
+- **painel oficial de projetos** com status, progresso estimado, última atualização, último commit local, bloqueio, próxima tarefa e dependências;
+- filtros de projetos por `ATIVO`, `BLOQUEADO`, `PAUSADO`, `PLANEJADO` e `FINALIZADO`;
+- ações por projeto para abrir a pasta local, abrir o GitHub e executar quando houver comando configurado.
 
-## Fluxo integrado — FGTS Poligonal
+## Painel de projetos
 
-1. **Leitor PDF Extrato Mensal — Poligonal** gera a planilha XLSX.
+A seção **Projetos** foi criada para organizar o portfólio sem misturá-lo ao catálogo de ferramentas executáveis.
+
+Os dados iniciais são copiados na primeira execução para:
+
+```text
+%APPDATA%\DP Ferramentas e Utilidades\projects.json
+```
+
+Esse arquivo pode ser ajustado conforme o andamento real de cada projeto. O campo `progress` é um indicador operacional de 0 a 100 e não é calculado automaticamente.
+
+Quando a pasta local cadastrada é um repositório Git, o aplicativo tenta mostrar o último commit diretamente do Git local. Se não conseguir, usa o valor informado no catálogo.
+
+## Fluxo integrado - FGTS Poligonal
+
+1. **Leitor PDF Extrato Mensal - Poligonal** gera a planilha XLSX.
 2. **FGTS por Obra / Poligonal** importa a planilha e continua a automação.
 
 ## Testar no Windows
@@ -25,13 +43,12 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\executar.bat
 ```
 
-Na primeira execução, o catálogo será copiado para:
+Na primeira execução, os catálogos serão copiados para:
 
 ```text
 %APPDATA%\DP Ferramentas e Utilidades\tools.json
+%APPDATA%\DP Ferramentas e Utilidades\projects.json
 ```
-
-Edite esse arquivo para ajustar os caminhos reais das ferramentas sem alterar o código.
 
 ## Gerar o executável
 

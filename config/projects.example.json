@@ -1,0 +1,456 @@
+{
+  "projects": [
+    {
+      "id": "leitor-cupons-financas",
+      "name": "Leitor de Cupons / Finanças Android",
+      "summary": "Aplicativo Android para leitura, organização e persistência de cupons/NFC-e, produtos e lançamentos financeiros.",
+      "status": "ATIVO",
+      "progress": 68,
+      "category": "Aplicativos",
+      "local_path": "%USERPROFILE%\\Desktop\\Leitor_Cupons_Financas",
+      "last_update": "21/09/2026",
+      "blocker": "Captura de algumas NFC-e depende de páginas com JavaScript; precisa consolidar fallback pela chave de acesso.",
+      "next_task": "Implementar e validar o fallback pela chave de acesso e testar em emulador e celular.",
+      "dependencies": [
+        "Android SDK",
+        "Gradle"
+      ],
+      "icon": "APP"
+    },
+    {
+      "id": "radar-concurso",
+      "name": "Radar Concurso",
+      "summary": "Coletor e classificador de publicações de concursos, com DOE-MS, banco local, deduplicação, relatórios e testes.",
+      "status": "ATIVO",
+      "progress": 78,
+      "category": "Automação",
+      "repository": "https://github.com/cezararc-maker/Radar_Concurso",
+      "local_path": "%USERPROFILE%\\Desktop\\Radar_Concurso",
+      "last_update": "19/09/2026",
+      "next_task": "Refinar falsos positivos e classificações e preparar expansão de fontes.",
+      "dependencies": [],
+      "icon": "RAD"
+    },
+    {
+      "id": "radar-cct",
+      "name": "Radar CCT - Convenções Coletivas",
+      "summary": "Monitor de instrumentos coletivos, sindicatos e atualizações de CCT/ACT com execução automatizada no Windows.",
+      "status": "ATIVO",
+      "progress": 22,
+      "category": "Automação",
+      "repository": "https://github.com/cezararc-maker/Radar_CCT",
+      "local_path": "%USERPROFILE%\\Desktop\\Radar_CCT",
+      "last_update": "21/09/2026",
+      "next_task": "Consolidar base Python + SQLite + cadastro de sindicatos e iniciar coletores.",
+      "dependencies": [
+        "Agendador de Tarefas do Windows"
+      ],
+      "icon": "CCT"
+    },
+    {
+      "id": "pendencias-receita",
+      "name": "Pendências Fiscais Receita Federal",
+      "summary": "Automação Playwright para consultar CNPJs, representar como procurador, registrar pendências e baixar relatórios.",
+      "status": "BLOQUEADO",
+      "progress": 66,
+      "category": "Fiscal",
+      "repository": "https://github.com/cezararc-maker/pendecia_fiscal_receita",
+      "local_path": "%USERPROFILE%\\Desktop\\GitHub\\Pendências Fiscais Receita",
+      "last_update": "12/09/2026",
+      "blocker": "O fluxo automatizado pode disparar validação visual do portal, embora o navegador preparado manualmente não apresente o desafio.",
+      "next_task": "Retomar o diagnóstico controlado após a abertura e reduzir a automação no trecho que dispara a validação.",
+      "dependencies": [
+        "Portal da Receita Federal",
+        "Playwright"
+      ],
+      "icon": "RFB",
+      "launch_kind": "batch",
+      "launch_target": "%USERPROFILE%\\Desktop\\GitHub\\pendecia_fiscal_receita\\scripts\\iniciar-consulta.bat"
+    },
+    {
+      "id": "fgts-poligonal",
+      "name": "FGTS por Obra / Poligonal",
+      "summary": "Automação do FGTS Digital para emissão parametrizada por obra usando planilha produzida pelo leitor de extratos.",
+      "status": "ATIVO",
+      "progress": 67,
+      "category": "FGTS",
+      "repository": "https://github.com/cezararc-maker/FGTS_por_obra_poligonal",
+      "local_path": "%USERPROFILE%\\Desktop\\GitHub\\FGTS_por_obra_poligonal",
+      "last_update": "17/09/2026",
+      "blocker": "Seleção de competência precisa usar a lista exibida pelo portal, em vez de preenchimento direto.",
+      "next_task": "Implementar clique no campo e seleção da competência disponível na lista.",
+      "dependencies": [
+        "Leitor PDF Extrato Mensal - Poligonal",
+        "FGTS Digital"
+      ],
+      "icon": "FGT",
+      "launch_kind": "batch",
+      "launch_target": "%USERPROFILE%\\Desktop\\GitHub\\FGTS_por_obra_poligonal\\scripts\\executar.bat"
+    },
+    {
+      "id": "leitor-pdf-poligonal",
+      "name": "Leitor PDF Extrato Mensal - Poligonal",
+      "summary": "Extrai dados dos extratos mensais e gera a planilha XLSX consumida pela automação FGTS por Obra / Poligonal.",
+      "status": "ATIVO",
+      "progress": 80,
+      "category": "FGTS",
+      "repository": "https://github.com/cezararc-maker/Leitor_PDF_Extrato_Mensal_Poligonal",
+      "local_path": "%USERPROFILE%\\Desktop\\GitHub\\Leitor_PDF_Extrato_Mensal_Poligonal",
+      "last_update": "17/09/2026",
+      "next_task": "Fechar a integração Leitor -> XLSX -> FGTS Poligonal e padronizar a execução pelo portal.",
+      "dependencies": [],
+      "icon": "PDF",
+      "launch_kind": "html",
+      "launch_target": "%USERPROFILE%\\Desktop\\GitHub\\Leitor_PDF_Extrato_Mensal_Poligonal\\index.html"
+    },
+    {
+      "id": "controle-folha",
+      "name": "Controle de Folha de Pagamento",
+      "summary": "Planilha parametrizada para controle e conferência da folha, preparada para distribuição a outros usuários.",
+      "status": "ATIVO",
+      "progress": 24,
+      "category": "Folha",
+      "repository": "https://github.com/cezararc-maker/Controle_Folha_de_Pagamento",
+      "local_path": "%USERPROFILE%\\Desktop\\GitHub\\Controle_Folha_de_Pagamento",
+      "last_update": "14/09/2026",
+      "next_task": "Alimentar o repositório com a base e implementar o painel A1:I7 e a parametrização prevista.",
+      "dependencies": [
+        "Excel",
+        "Power Query"
+      ],
+      "icon": "FOL"
+    },
+    {
+      "id": "simulador-sero-rmt",
+      "name": "Simulador de Aferição de Obra / RMT / SERO",
+      "summary": "Simulador de aferição indireta de obra com cálculos vinculados à metragem, VAU e parâmetros do RMT.",
+      "status": "ATIVO",
+      "progress": 28,
+      "category": "Fiscal",
+      "last_update": "22/09/2026",
+      "next_task": "Construir a planilha 100% vinculada por fórmulas e validar os resultados contra memória de cálculo real.",
+      "dependencies": [
+        "Apostila RMT",
+        "VAU atualizado"
+      ],
+      "icon": "RMT"
+    },
+    {
+      "id": "dp-ferramentas",
+      "name": "DP - Ferramentas & Utilidades",
+      "summary": "Central desktop para abrir ferramentas e acompanhar o portfólio de projetos do Departamento Pessoal.",
+      "status": "ATIVO",
+      "progress": 82,
+      "category": "Plataforma",
+      "repository": "https://github.com/cezararc-maker/DP-Ferramentas-e-Utilidades",
+      "local_path": "%USERPROFILE%\\Desktop\\GitHub\\DP-Ferramentas-e-Utilidades",
+      "last_update": "23/09/2026",
+      "next_task": "Usar o novo painel de projetos no dia a dia e ajustar os dados de cada projeto conforme as próximas entregas.",
+      "dependencies": [],
+      "icon": "DP",
+      "launch_kind": "batch",
+      "launch_target": "%USERPROFILE%\\Desktop\\GitHub\\DP-Ferramentas-e-Utilidades\\scripts\\executar.bat"
+    },
+    {
+      "id": "fap-dominio",
+      "name": "Automação FAP - Domínio Sistemas",
+      "summary": "Automação por interface para cadastrar nova vigência e fator FAP no módulo Folha do Domínio.",
+      "status": "PAUSADO",
+      "progress": 45,
+      "category": "Folha",
+      "last_update": "2026",
+      "blocker": "Reconhecimento de assets e foco da janela ainda não ficaram suficientemente robustos.",
+      "next_task": "Revisar estratégia de reconhecimento visual e estabilizar foco/janela antes de ampliar o lote.",
+      "dependencies": [
+        "Domínio Sistemas",
+        "PyAutoGUI",
+        "OpenCV"
+      ],
+      "icon": "FAP"
+    },
+    {
+      "id": "holerites-consignado",
+      "name": "Holerites + Comunicado Consignado",
+      "summary": "Leitor e organizador de PDFs para localizar colaborador e serviço, separar documentos e gerar conjuntos finais.",
+      "status": "PAUSADO",
+      "progress": 42,
+      "category": "Documentos",
+      "last_update": "2026",
+      "next_task": "Retomar com lote real, validar identificação de Serviço e concluir interface/logs.",
+      "dependencies": [
+        "pypdf",
+        "pdfplumber"
+      ],
+      "icon": "PDF"
+    },
+    {
+      "id": "extrato-fgts-servico",
+      "name": "Leitor de Extrato FGTS por Serviço",
+      "summary": "Extrai Serviço e Valor do FGTS de PDFs e gera planilha estruturada.",
+      "status": "PAUSADO",
+      "progress": 62,
+      "category": "FGTS",
+      "last_update": "2026",
+      "next_task": "Verificar sobreposição com o Leitor PDF Poligonal e decidir entre incorporar ou arquivar.",
+      "dependencies": [],
+      "icon": "FGT"
+    },
+    {
+      "id": "faltas-dominio-vba",
+      "name": "TXT Faltas + DSR - Domínio",
+      "summary": "VBA para gerar layout de faltas e DSR com competência, empresa, códigos e cálculo semanal.",
+      "status": "PAUSADO",
+      "progress": 86,
+      "category": "Folha",
+      "last_update": "20/02/2026",
+      "next_task": "Executar teste final com arquivo real e, se aprovado, marcar como finalizado e documentar o uso.",
+      "dependencies": [
+        "Excel VBA",
+        "Domínio Sistemas"
+      ],
+      "icon": "VBA"
+    },
+    {
+      "id": "simples-nacional",
+      "name": "Automação Simples Nacional",
+      "summary": "Projeto para consultar lista de CNPJs, gerar relatórios PDF e consolidar resultados em Excel.",
+      "status": "PAUSADO",
+      "progress": 20,
+      "category": "Fiscal",
+      "last_update": "13/01/2026",
+      "next_task": "Revalidar o fluxo atual do portal e definir método de autenticação antes de retomar a implementação.",
+      "dependencies": [
+        "Portal do Simples Nacional"
+      ],
+      "icon": "SN"
+    },
+    {
+      "id": "qpdf-organizador",
+      "name": "QPDF - Organizador e Juntador de PDFs",
+      "summary": "Utilitário robusto para organizar e unir PDFs com fluxo mais confiável que um BAT simples.",
+      "status": "PAUSADO",
+      "progress": 28,
+      "category": "Documentos",
+      "last_update": "21/08/2026",
+      "next_task": "Consolidar arquitetura, localizar/embutir QPDF e fechar uma interface simples com relatório de execução.",
+      "dependencies": [
+        "QPDF"
+      ],
+      "icon": "PDF"
+    },
+    {
+      "id": "impressao-pdf-lote",
+      "name": "Impressão de PDFs em Lote",
+      "summary": "Utilitário para imprimir vários PDFs sem abrir arquivo por arquivo no Windows 10.",
+      "status": "PAUSADO",
+      "progress": 18,
+      "category": "Documentos",
+      "last_update": "28/01/2026",
+      "blocker": "A abordagem pelo verbo Imprimir do Explorer não funcionou de forma confiável no ambiente.",
+      "next_task": "Substituir a abordagem por um visualizador/CLI com impressão silenciosa controlada.",
+      "dependencies": [
+        "Windows 10"
+      ],
+      "icon": "PRN"
+    },
+    {
+      "id": "cache-chrome-bat",
+      "name": "Limpeza Segura de Cache do Chrome",
+      "summary": "BAT para limpar cache preservando senhas, preenchimento automático e dados importantes do perfil.",
+      "status": "PAUSADO",
+      "progress": 75,
+      "category": "Utilidades",
+      "last_update": "11/03/2026",
+      "next_task": "Revisar o BAT final no Chrome atual e decidir se será incorporado ao DP - Ferramentas.",
+      "dependencies": [
+        "Google Chrome"
+      ],
+      "icon": "BAT"
+    },
+    {
+      "id": "fg-navegador",
+      "name": "FG Navegador",
+      "summary": "Ferramenta catalogada para apoio a rotinas FGTS, sem desenvolvimento recente registrado.",
+      "status": "PAUSADO",
+      "progress": 15,
+      "category": "FGTS",
+      "last_update": "2026",
+      "next_task": "Revisar finalidade e decidir se permanece como projeto independente.",
+      "dependencies": [],
+      "icon": "FG"
+    },
+    {
+      "id": "organizador-conectividade",
+      "name": "Organizador de Extrato Conectividade",
+      "summary": "Organiza dados extraídos de arquivos da Conectividade Social em estrutura utilizável.",
+      "status": "FINALIZADO",
+      "progress": 100,
+      "category": "FGTS",
+      "last_update": "2026",
+      "next_task": "Somente manutenção corretiva, caso apareça novo formato de arquivo.",
+      "dependencies": [],
+      "icon": "XLS"
+    },
+    {
+      "id": "rifa-pptx",
+      "name": "Rifa Editável PowerPoint / Canva",
+      "summary": "Recriação editável de rifa 1 a 200 com grade matemática, revisão de textos e identidade visual verde/dourado/creme.",
+      "status": "PAUSADO",
+      "progress": 32,
+      "category": "Documentos",
+      "last_update": "28/08/2026",
+      "next_task": "Retomar a partir da imagem original e concluir a versão PPTX validada para importação no Canva.",
+      "dependencies": [
+        "Imagem original"
+      ],
+      "icon": "PPT"
+    },
+    {
+      "id": "detector-prompt-injection",
+      "name": "Detector de Prompt Injection em Documentos",
+      "summary": "Utilitário para analisar documentos antes de enviá-los a modelos de IA e sinalizar conteúdo potencialmente malicioso.",
+      "status": "PLANEJADO",
+      "progress": 5,
+      "category": "Segurança",
+      "last_update": "25/08/2026",
+      "next_task": "Definir modelo de ameaças, formatos suportados e critérios de detecção antes de implementar.",
+      "dependencies": [],
+      "icon": "SEC"
+    },
+    {
+      "id": "planner-semanal",
+      "name": "Planner Semanal e Organização Pessoal",
+      "summary": "Ferramenta simples para organização de tarefas semanais e apoio à organização financeira/pessoal.",
+      "status": "PLANEJADO",
+      "progress": 5,
+      "category": "Utilidades",
+      "last_update": "02/04/2026",
+      "next_task": "Escolher formato definitivo: planilha, app simples ou template imprimível.",
+      "dependencies": [],
+      "icon": "PLN"
+    },
+    {
+      "id": "promocoes",
+      "name": "Promoções",
+      "summary": "Projeto reservado no catálogo, ainda sem escopo funcional consolidado.",
+      "status": "PLANEJADO",
+      "progress": 0,
+      "category": "Outros",
+      "next_task": "Definir objetivo, entradas, saídas e público antes de iniciar desenvolvimento.",
+      "dependencies": [],
+      "icon": "NEW"
+    },
+    {
+      "id": "suite-leitores-pdf",
+      "name": "Suíte de Leitores PDF do DP",
+      "summary": "Linha reutilizável de leitores para extratos, recibos, férias e outros documentos com logs, progresso e relatórios.",
+      "status": "PLANEJADO",
+      "progress": 10,
+      "category": "Plataforma",
+      "last_update": "16/01/2026",
+      "next_task": "Consolidar componentes comuns dos leitores existentes em uma base reutilizável.",
+      "dependencies": [
+        "Padrão Python Windows"
+      ],
+      "icon": "PDF"
+    },
+    {
+      "id": "setup-python-padrao",
+      "name": "Modelo Padrão EXE / SETUP para Utilitários Python",
+      "summary": "Base reutilizável para empacotar utilitários Python em executável e instalador sem dependências externas para o usuário final.",
+      "status": "PLANEJADO",
+      "progress": 12,
+      "category": "Plataforma",
+      "last_update": "19/09/2026",
+      "next_task": "Criar projeto-modelo com PyInstaller, instalador, logs, atualização e checklist de distribuição.",
+      "dependencies": [
+        "PyInstaller"
+      ],
+      "icon": "EXE"
+    },
+    {
+      "id": "bat-copia-grf",
+      "name": "BAT - Cópia de Relatórios Analíticos da GRF",
+      "summary": "Copia arquivos de várias competências para uma pasta única sem mover nem sobrescrever os originais.",
+      "status": "FINALIZADO",
+      "progress": 100,
+      "category": "Utilidades",
+      "last_update": "11/09/2026",
+      "next_task": "Sem pendência; manter como utilitário concluído.",
+      "dependencies": [
+        "Windows"
+      ],
+      "icon": "BAT"
+    },
+    {
+      "id": "vba-contar-dias",
+      "name": "VBA - Contar Valores Separados por Vírgula",
+      "summary": "Função VBA para contar quantos valores/dias existem em uma célula separados por vírgula.",
+      "status": "FINALIZADO",
+      "progress": 100,
+      "category": "Folha",
+      "last_update": "20/02/2026",
+      "next_task": "Sem pendência; reutilizar quando necessário.",
+      "dependencies": [
+        "Excel VBA"
+      ],
+      "icon": "VBA"
+    },
+    {
+      "id": "apostila-rmt",
+      "name": "Apostila RMT - Aferição Indireta / SERO",
+      "summary": "Manual explicativo dos campos do RMT por aferição indireta, com fontes e orientação para consulta do VAU.",
+      "status": "FINALIZADO",
+      "progress": 100,
+      "category": "Fiscal",
+      "last_update": "22/09/2026",
+      "next_task": "Manter referências atualizadas quando houver alteração normativa ou de consulta do VAU.",
+      "dependencies": [],
+      "icon": "DOC"
+    },
+    {
+      "id": "consulta-cnpj-power-query",
+      "name": "Consulta CNPJ / JSON -> Excel / Power Query",
+      "summary": "Estrutura para obter dados cadastrais de CNPJ e transformá-los em tabelas utilizáveis no Excel.",
+      "status": "FINALIZADO",
+      "progress": 100,
+      "category": "Fiscal",
+      "last_update": "15/12/2025",
+      "next_task": "Reutilizar os componentes no Controle de Folha quando a integração cadastral entrar na fila.",
+      "dependencies": [
+        "Excel",
+        "Power Query"
+      ],
+      "icon": "PQ"
+    },
+    {
+      "id": "padrao-python-windows",
+      "name": "Padrão de Desenvolvimento Python Windows",
+      "summary": "Método reutilizável para utilitários Python com estrutura organizada, validações, tratamento de erros, logs, progresso, relatórios e preparação de distribuição.",
+      "status": "FINALIZADO",
+      "progress": 100,
+      "category": "Plataforma",
+      "last_update": "19/09/2026",
+      "next_task": "Aplicar o padrão aos novos leitores e automações, evoluindo o template quando surgirem necessidades recorrentes.",
+      "dependencies": [
+        "Python 3.11",
+        "VS Code"
+      ],
+      "icon": "PY"
+    },
+    {
+      "id": "ecac-cno-fluxo",
+      "name": "Fluxo e-CAC - Abertura de CNO",
+      "summary": "Roteiro operacional estudado e documentado para abertura de CNO no ambiente e-CAC.",
+      "status": "FINALIZADO",
+      "progress": 100,
+      "category": "Fiscal",
+      "last_update": "19/01/2026",
+      "next_task": "Somente revisar o roteiro se o portal ou a legislação alterarem o procedimento.",
+      "dependencies": [
+        "e-CAC"
+      ],
+      "icon": "CNO"
+    }
+  ]
+}

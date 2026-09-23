@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dp-ferramentas-utilidades"
-version = "0.1.0"
-description = "Central desktop de ferramentas e utilidades do Departamento Pessoal"
+version = "0.3.0"
+description = "Central desktop de ferramentas, utilidades e projetos do Departamento Pessoal"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["PySide6>=6.7,<7"]
