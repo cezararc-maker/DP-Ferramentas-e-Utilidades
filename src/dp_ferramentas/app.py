@@ -36,6 +36,7 @@ from .launcher import (
     target_exists,
 )
 from .models import ProjectDefinition, ToolDefinition
+from .seguro_desemprego_ui import SeguroDesempregoWindow
 
 CATEGORIES = ["Início", "Projetos", "FGTS", "Folha", "Fiscal", "Documentos"]
 PROJECT_STATUSES = ["Todos", "ATIVO", "BLOQUEADO", "PAUSADO", "PLANEJADO", "FINALIZADO"]
@@ -279,6 +280,7 @@ class MainWindow(QMainWindow):
         self.projects = load_projects()
         self.category = "Início"
         self.dark_theme = True
+        self.seguro_desemprego_window: SeguroDesempregoWindow | None = None
         self.setWindowTitle("DP - Ferramentas & Utilidades")
         self.resize(1240, 800)
         root = QWidget()
@@ -321,7 +323,7 @@ class MainWindow(QMainWindow):
         projects.setObjectName("secondary")
         projects.clicked.connect(lambda: self.open_path(user_projects_path()))
         layout.addWidget(projects)
-        version = QLabel("Versão 0.3.0")
+        version = QLabel("Versão 0.4.0")
         version.setObjectName("muted")
         layout.addWidget(version)
         return sidebar
@@ -489,6 +491,18 @@ class MainWindow(QMainWindow):
 
     def launch(self, tool: ToolDefinition) -> None:
         try:
+            if tool.kind == "internal":
+                if tool.target != "seguro-desemprego":
+                    raise ValueError(f"Ferramenta interna não suportada: {tool.target}")
+                if self.seguro_desemprego_window is None:
+                    self.seguro_desemprego_window = SeguroDesempregoWindow(self)
+                    self.seguro_desemprego_window.destroyed.connect(
+                        lambda: setattr(self, "seguro_desemprego_window", None)
+                    )
+                self.seguro_desemprego_window.show()
+                self.seguro_desemprego_window.raise_()
+                self.seguro_desemprego_window.activateWindow()
+                return
             if not target_exists(tool):
                 raise FileNotFoundError(f"Não encontrei o caminho configurado:\n{tool.expanded_target}")
             open_tool(tool)
