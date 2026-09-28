@@ -122,3 +122,14 @@ def test_process_analysis_generates_sd_then_cd_and_never_overwrites(tmp_path):
     assert len(PdfReader(str(first.generated_files[0])).pages) == 2
     assert first.log_path.exists()
     assert first.warnings_path is None
+
+
+def test_parse_cd_accepts_header_without_accents(tmp_path):
+    source = tmp_path / "entrada.pdf"
+    text = _cd_text().replace("Comunicação", "Comunicacao")
+
+    record, issues = parse_page_text(text, source, 0)
+
+    assert issues == []
+    assert record is not None
+    assert record.document_type == "CD"
