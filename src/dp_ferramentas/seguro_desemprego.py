@@ -345,7 +345,10 @@ def process_analysis(
             progress(index, len(valid), f"Gerando {bundle.name}")
         writer = PdfWriter()
         for record in (bundle.sd_pages[0], bundle.cd_pages[0]):
-            reader = readers.setdefault(record.source, PdfReader(str(record.source)))
+            reader = readers.get(record.source)
+            if reader is None:
+                reader = PdfReader(str(record.source))
+                readers[record.source] = reader
             writer.add_page(reader.pages[record.page_index])
 
         target = _unique_output_path(output_dir, bundle)
