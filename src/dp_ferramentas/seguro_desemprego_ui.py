@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QRadioButton,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
@@ -136,7 +137,7 @@ class SeguroDesempregoWindow(QDialog):
         layout.addWidget(self.file_list)
 
         output_row = QHBoxLayout()
-        output_label = QLabel("Pasta de saída:")
+        output_label = QLabel("Pasta de saída / relatórios:")
         self.output_edit = QLineEdit()
         self.output_edit.setPlaceholderText("Selecione a pasta onde os PDFs organizados serão gravados")
         choose_output = QPushButton("Escolher pasta")
@@ -146,6 +147,47 @@ class SeguroDesempregoWindow(QDialog):
         output_row.addWidget(self.output_edit, 1)
         output_row.addWidget(choose_output)
         layout.addLayout(output_row)
+
+        destination_title = QLabel("Destino dos PDFs separados")
+        destination_title.setObjectName("projectMetaKey")
+        layout.addWidget(destination_title)
+
+        self.create_folders_radio = QRadioButton(
+            "Criar uma pasta para cada colaborador na pasta de saída"
+        )
+        self.create_folders_radio.setChecked(True)
+        layout.addWidget(self.create_folders_radio)
+
+        self.direct_distribution_radio = QRadioButton(
+            "Distribuir diretamente nas pastas existentes da pasta principal das rescisões"
+        )
+        self.direct_distribution_radio.toggled.connect(self._update_destination_mode)
+        layout.addWidget(self.direct_distribution_radio)
+
+        rescisao_row = QHBoxLayout()
+        rescisao_label = QLabel("Pasta principal:")
+        self.rescisao_edit = QLineEdit()
+        self.rescisao_edit.setPlaceholderText(
+            "Selecione a pasta que contém as pastas individuais das rescisões"
+        )
+        self.rescisao_edit.setEnabled(False)
+        self.rescisao_button = QPushButton("Escolher pasta")
+        self.rescisao_button.setObjectName("secondary")
+        self.rescisao_button.setEnabled(False)
+        self.rescisao_button.clicked.connect(self.select_rescisao_root)
+        rescisao_row.addWidget(rescisao_label)
+        rescisao_row.addWidget(self.rescisao_edit, 1)
+        rescisao_row.addWidget(self.rescisao_button)
+        layout.addLayout(rescisao_row)
+
+        matching_hint = QLabel(
+            "No modo direto, a ferramenta procura primeiro o nome exato. "
+            "Se necessário, compara novamente ignorando DE, DA, DO, DAS e DOS. "
+            "O arquivo só é gravado quando existe uma única pasta correspondente."
+        )
+        matching_hint.setWordWrap(True)
+        matching_hint.setObjectName("description")
+        layout.addWidget(matching_hint)
 
         action_row = QHBoxLayout()
         self.analyze_button = QPushButton("1. Analisar documentos")
@@ -297,11 +339,25 @@ class SeguroDesempregoWindow(QDialog):
         current = self.output_edit.text().strip()
         folder = QFileDialog.getExistingDirectory(
             self,
-            "Selecione a pasta de saída",
+            "Selecione a pasta de saída / relatórios",
             current or "",
         )
         if folder:
             self.output_edit.setText(folder)
+
+    def _update_destination_mode(self, direct: bool) -> None:
+        self.rescisao_edit.setEnabled(direct)
+        self.rescisao_button.setEnabled(direct)
+
+    def select_rescisao_root(self) -> None:
+        current = self.rescisao_edit.text().strip()
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Selecione a pasta principal das rescisões",
+            current or "",
+        )
+        if folder:
+            self.rescisao_edit.setText(folder)
 
     def _reset_analysis(self) -> None:
         self.analysis = None
@@ -400,8 +456,32 @@ class SeguroDesempregoWindow(QDialog):
             return
         output_text = self.output_edit.text().strip()
         if not output_text:
-            QMessageBox.information(self, "Seguro-Desemprego", "Escolha a pasta de saída.")
+            QMessageBox.information(
+                self,
+                "Seguro-Desemprego",
+                "Escolha a pasta de saída / relatórios.",
+            )
             return
+
+        direct_mode = self.direct_distribution_radio.isChecked()
+        rescisao_root: Path | None = None
+        if direct_mode:
+            root_text = self.rescisao_edit.text().strip()
+            if not root_text:
+                QMessageBox.information(
+                    self,
+                    "Seguro-Desemprego",
+                    "Escolha a pasta principal das rescisões.",
+                )
+                return
+            rescisao_root = Path(root_text)
+            if not rescisao_root.exists() or not rescisao_root.is_dir():
+                QMessageBox.warning(
+                    self,
+                    "Seguro-Desemprego",
+                    "A pasta principal das rescisões não foi encontrada.",
+                )
+                return
 
         self.process_button.setEnabled(False)
         try:
@@ -410,15 +490,23 @@ class SeguroDesempregoWindow(QDialog):
                 self.analysis,
                 Path(output_text),
                 self._progress,
+                create_employee_folders=self.create_folders_radio.isChecked(),
+                rescisao_root=rescisao_root,
             )
             self.progress.setValue(100)
             self.open_output_button.setEnabled(True)
             self.open_warnings_button.setEnabled(bool(self.processing.warnings_path))
+
+            generated = len(self.processing.generated_files)
+            not_distributed = len(self.processing.distribution_issues)
             self.status.setText(
-                f"Concluído: {len(self.processing.generated_files)} PDF(s) gerado(s)."
+                f"Concluído: {generated} PDF(s) gerado(s), "
+                f"{not_distributed} não distribuído(s)."
             )
+
             lines = [
-                f"Arquivos gerados: {len(self.processing.generated_files)}",
+                f"Arquivos gerados: {generated}",
+                f"Não distribuídos: {not_distributed}",
                 f"Log: {self.processing.log_path.name}",
             ]
             if self.processing.warnings_path:
@@ -426,12 +514,15 @@ class SeguroDesempregoWindow(QDialog):
             else:
                 lines.append("Nenhuma advertência registrada.")
             self.notes.setPlainText("\n".join(lines))
-            QMessageBox.information(
-                self,
-                "Processamento concluído",
-                f"{len(self.processing.generated_files)} PDF(s) foram gerados com sucesso.\n\n"
-                "O arquivo original não foi alterado.",
+
+            message = (
+                f"{generated} PDF(s) foram gerados com sucesso.\n"
+                f"{not_distributed} colaborador(es) não foram distribuídos.\n\n"
+                "O arquivo original não foi alterado."
             )
+            if not_distributed:
+                message += "\nConsulte o arquivo de advertências antes de concluir a rotina."
+            QMessageBox.information(self, "Processamento concluído", message)
         except Exception as exc:
             QMessageBox.warning(self, "Falha no processamento", str(exc))
             self.status.setText("Não foi possível concluir a geração dos PDFs.")
@@ -439,6 +530,11 @@ class SeguroDesempregoWindow(QDialog):
             self.process_button.setEnabled(bool(self.analysis.valid_bundles))
 
     def open_output(self) -> None:
+        if self.direct_distribution_radio.isChecked():
+            direct = Path(self.rescisao_edit.text().strip())
+            if direct.exists():
+                os.startfile(direct)
+                return
         folder = Path(self.output_edit.text().strip())
         if folder.exists():
             os.startfile(folder)
