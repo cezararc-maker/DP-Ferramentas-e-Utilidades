@@ -29,8 +29,11 @@ Fluxo:
 6. por padrão, a ferramenta cria uma pasta com o nome completo de cada colaborador e salva dentro dela `SD - NOME DO COLABORADOR.pdf`;
 7. alternativamente, é possível selecionar a pasta principal das rescisões e distribuir os PDFs diretamente nas pastas já existentes;
 8. no modo de distribuição direta, a busca tenta primeiro o nome exato e, se necessário, compara novamente ignorando `DE`, `DA`, `DO`, `DAS` e `DOS`;
-9. a distribuição direta só ocorre quando existe uma única pasta correspondente; ausências ou ambiguidades são registradas como advertência e nenhum arquivo é colocado automaticamente naquele caso;
-10. o PDF original nunca é alterado e arquivos existentes não são sobrescritos silenciosamente.
+9. antes de qualquer gravação nas pastas de rescisão, a tabela exibe um diagnóstico por colaborador/requerimento informando a pasta encontrada, equivalência sem preposição, ausência ou ambiguidade;
+10. a geração direta fica bloqueada enquanto existir qualquer pasta não encontrada ou ambígua; o processo é "tudo ou nada", portanto nenhuma pasta de rescisão recebe PDF enquanto houver pendências no diagnóstico;
+11. no modo direto nenhuma pasta de colaborador é criada pela ferramenta;
+12. a janela se adapta à área útil do monitor, permite redimensionar/maximizar e usa rolagem vertical quando o conteúdo não couber em monitores menores;
+13. o PDF original nunca é alterado e arquivos existentes não são sobrescritos silenciosamente.
 
 O processamento é local. PDFs protegidos por senha ou páginas que não possam ser identificadas são apontados como advertência/erro para revisão.
 
