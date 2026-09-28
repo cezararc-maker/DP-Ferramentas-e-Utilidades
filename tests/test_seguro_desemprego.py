@@ -7,6 +7,7 @@ from dp_ferramentas.seguro_desemprego import (
     DocumentBundle,
     PageRecord,
     _bundle_records,
+    diagnose_employee_folders,
     find_employee_folder,
     normalize_employee_folder_name,
     parse_page_text,
@@ -222,7 +223,7 @@ def test_process_analysis_distributes_into_existing_rescisao_folder(tmp_path):
     assert result.warnings_path is None
 
 
-def test_process_analysis_warns_and_skips_when_rescisao_folder_is_missing(tmp_path):
+def test_process_analysis_blocks_before_writing_when_rescisao_folder_is_missing(tmp_path):
     source = tmp_path / "origem.pdf"
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=300)
@@ -250,13 +251,106 @@ def test_process_analysis_warns_and_skips_when_rescisao_folder_is_missing(tmp_pa
     rescisao_root = tmp_path / "Rescisoes"
     rescisao_root.mkdir()
 
-    result = process_analysis(
-        analysis,
-        output,
-        rescisao_root=rescisao_root,
+    import pytest
+
+    with pytest.raises(ValueError, match="Nenhum PDF foi gravado"):
+        process_analysis(
+            analysis,
+            output,
+            rescisao_root=rescisao_root,
+        )
+
+    assert list(rescisao_root.rglob("*.pdf")) == []
+
+
+
+def test_diagnose_employee_folders_reports_exact_relaxed_and_missing(tmp_path):
+    root = tmp_path / "Rescisoes"
+    root.mkdir()
+    (root / "MARIA EXEMPLO").mkdir()
+    (root / "JOAO SILVA").mkdir()
+
+    source = tmp_path / "origem.pdf"
+    bundles = [
+        DocumentBundle(request_number="1", name="MARIA EXEMPLO"),
+        DocumentBundle(request_number="2", name="JOAO DA SILVA"),
+        DocumentBundle(request_number="3", name="ANA DOS SANTOS"),
+    ]
+    for bundle in bundles:
+        bundle.sd_pages.append(PageRecord(source, 0, "SD", bundle.request_number, bundle.name, "1"))
+        bundle.cd_pages.append(PageRecord(source, 1, "CD", bundle.request_number, bundle.name, "1"))
+
+    analysis = AnalysisResult(bundles=bundles, issues=[], total_pages=6)
+    diagnostics = diagnose_employee_folders(analysis, root)
+
+    assert diagnostics["1"].status == "exact"
+    assert diagnostics["1"].safe
+    assert diagnostics["2"].status == "relaxed"
+    assert diagnostics["2"].safe
+    assert diagnostics["3"].status == "missing"
+    assert not diagnostics["3"].safe
+
+
+def test_diagnose_employee_folders_reports_ambiguous_without_selecting_folder(tmp_path):
+    root = tmp_path / "Rescisoes"
+    root.mkdir()
+    (root / "JOAO DA SILVA").mkdir()
+    (root / "JOAO DE SILVA").mkdir()
+
+    source = tmp_path / "origem.pdf"
+    bundle = DocumentBundle(
+        request_number="7000000004",
+        name="JOAO DO SILVA",
+        sd_pages=[PageRecord(source, 0, "SD", "7000000004", "JOAO DO SILVA", "1")],
+        cd_pages=[PageRecord(source, 1, "CD", "7000000004", "JOAO DO SILVA", "1")],
+    )
+    analysis = AnalysisResult(bundles=[bundle], issues=[], total_pages=2)
+
+    diagnostic = diagnose_employee_folders(analysis, root)["7000000004"]
+
+    assert diagnostic.status == "ambiguous"
+    assert diagnostic.folder is None
+    assert len(diagnostic.candidates) == 2
+    assert not diagnostic.safe
+
+
+def test_direct_distribution_is_all_or_nothing_when_one_folder_is_missing(tmp_path):
+    source = tmp_path / "origem.pdf"
+    writer = PdfWriter()
+    for _ in range(4):
+        writer.add_blank_page(width=200, height=300)
+    with source.open("wb") as handle:
+        writer.write(handle)
+
+    found_bundle = DocumentBundle(
+        request_number="7000000100",
+        name="MARIA EXEMPLO",
+        sd_pages=[PageRecord(source, 0, "SD", "7000000100", "MARIA EXEMPLO", "1")],
+        cd_pages=[PageRecord(source, 1, "CD", "7000000100", "MARIA EXEMPLO", "1")],
+    )
+    missing_bundle = DocumentBundle(
+        request_number="7000000101",
+        name="ANA DAS FLORES",
+        sd_pages=[PageRecord(source, 2, "SD", "7000000101", "ANA DAS FLORES", "2")],
+        cd_pages=[PageRecord(source, 3, "CD", "7000000101", "ANA DAS FLORES", "2")],
+    )
+    analysis = AnalysisResult(
+        bundles=[found_bundle, missing_bundle],
+        issues=[],
+        total_pages=4,
     )
 
-    assert result.generated_files == []
-    assert len(result.distribution_issues) == 1
-    assert "Nenhuma pasta correspondente" in result.distribution_issues[0].message
-    assert result.warnings_path is not None
+    root = tmp_path / "Rescisoes"
+    destination = root / "MARIA EXEMPLO"
+    destination.mkdir(parents=True)
+
+    import pytest
+
+    with pytest.raises(ValueError, match="Nenhum PDF foi gravado"):
+        process_analysis(
+            analysis,
+            tmp_path / "relatorios",
+            rescisao_root=root,
+        )
+
+    assert list(destination.glob("*.pdf")) == []
