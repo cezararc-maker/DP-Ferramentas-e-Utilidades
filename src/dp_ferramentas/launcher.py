@@ -11,6 +11,7 @@ from .models import ProjectDefinition, ToolDefinition
 
 LOGGER = logging.getLogger(__name__)
 URL_KINDS = {"url", "github"}
+INTERNAL_KINDS = {"internal"}
 
 
 def expanded_path(value: str) -> Path:
@@ -20,7 +21,7 @@ def expanded_path(value: str) -> Path:
 def target_exists_for(kind: str, target: str) -> bool:
     if not target:
         return False
-    return kind in URL_KINDS or expanded_path(target).exists()
+    return kind in URL_KINDS or kind in INTERNAL_KINDS or expanded_path(target).exists()
 
 
 def open_target(kind: str, target: str) -> None:

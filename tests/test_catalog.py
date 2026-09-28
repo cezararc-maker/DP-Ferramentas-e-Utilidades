@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from dp_ferramentas.catalog import load_projects, load_tools
+from dp_ferramentas.catalog import ensure_user_config, load_projects, load_tools, user_config_path
 from dp_ferramentas.models import ProjectDefinition, ToolDefinition
 
 
@@ -46,3 +46,23 @@ def test_rejects_duplicate_project_ids(tmp_path):
     path.write_text(json.dumps({"projects": [item, item]}), encoding="utf-8")
     with pytest.raises(ValueError, match="duplicados"):
         load_projects(path)
+
+
+def test_existing_user_catalog_receives_new_bundled_tools_without_losing_custom(monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    path = user_config_path()
+    custom = {
+        "id": "custom",
+        "name": "Ferramenta personalizada",
+        "description": "Mantida pelo usuário",
+        "category": "Documentos",
+        "kind": "url",
+        "target": "https://example.com",
+    }
+    path.write_text(json.dumps({"tools": [custom]}), encoding="utf-8")
+
+    ensure_user_config()
+    ids = {item["id"] for item in json.loads(path.read_text(encoding="utf-8"))["tools"]}
+
+    assert "custom" in ids
+    assert "seguro-desemprego-organizador" in ids

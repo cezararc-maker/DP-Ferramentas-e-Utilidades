@@ -37,8 +37,27 @@ def _ensure_config(destination: Path, bundled_relative: str) -> Path:
     return destination
 
 
+def _merge_missing_entries(destination: Path, bundled_relative: str, key: str) -> Path:
+    _ensure_config(destination, bundled_relative)
+    bundled = json.loads(resource_path(bundled_relative).read_text(encoding="utf-8"))
+    current = json.loads(destination.read_text(encoding="utf-8"))
+    existing_ids = {item.get("id") for item in current.get(key, [])}
+    missing = [item for item in bundled.get(key, []) if item.get("id") not in existing_ids]
+    if missing:
+        current.setdefault(key, []).extend(missing)
+        destination.write_text(
+            json.dumps(current, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    return destination
+
+
 def ensure_user_config() -> Path:
-    return _ensure_config(user_config_path(), "config/tools.example.json")
+    return _merge_missing_entries(
+        user_config_path(),
+        "config/tools.example.json",
+        "tools",
+    )
 
 
 def ensure_projects_config() -> Path:

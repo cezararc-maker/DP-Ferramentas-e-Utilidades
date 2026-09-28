@@ -10,9 +10,32 @@ Aplicativo desktop para centralizar ferramentas, automações, documentos e o ac
 - fluxo visual integrado entre o Leitor PDF e o FGTS por Obra / Poligonal;
 - catálogo local personalizável e logs de execução;
 - tema claro/escuro;
+- **Organizador de Seguro-Desemprego**: identifica SD/CD, agrupa por requerimento, valida nome/CPF e gera um PDF por colaborador sem alterar o original;
 - **painel oficial de projetos** com status, progresso estimado, última atualização, último commit local, bloqueio, próxima tarefa e dependências;
 - filtros de projetos por `ATIVO`, `BLOQUEADO`, `PAUSADO`, `PLANEJADO` e `FINALIZADO`;
 - ações por projeto para abrir a pasta local, abrir o GitHub e executar quando houver comando configurado.
+
+## Organizador de Seguro-Desemprego
+
+Na categoria **Documentos**, abra **Seguro-Desemprego — Organizar SD/CD**.
+
+Fluxo:
+
+1. selecione um ou mais PDFs emitidos pelo portal do MTE;
+2. a ferramenta identifica cada página como Requerimento SD ou Comunicação de Dispensa CD;
+3. o agrupamento usa o número do requerimento como chave principal;
+4. nome e CPF são usados como validações adicionais;
+5. somente conjuntos com exatamente 1 SD + 1 CD e dados compatíveis são liberados para geração;
+6. por padrão, a ferramenta cria uma pasta com o nome completo de cada colaborador e salva dentro dela `SD - NOME DO COLABORADOR.pdf`;
+7. alternativamente, é possível selecionar a pasta principal das rescisões e distribuir os PDFs diretamente nas pastas já existentes;
+8. no modo de distribuição direta, a busca tenta primeiro o nome exato e, se necessário, compara novamente ignorando `DE`, `DA`, `DO`, `DAS` e `DOS`;
+9. antes de qualquer gravação nas pastas de rescisão, a tabela exibe um diagnóstico por colaborador/requerimento informando a pasta encontrada, equivalência sem preposição, ausência ou ambiguidade;
+10. a geração direta fica bloqueada enquanto existir qualquer pasta não encontrada ou ambígua; o processo é "tudo ou nada", portanto nenhuma pasta de rescisão recebe PDF enquanto houver pendências no diagnóstico;
+11. no modo direto nenhuma pasta de colaborador é criada pela ferramenta;
+12. a janela se adapta à área útil do monitor, permite redimensionar/maximizar e usa rolagem vertical quando o conteúdo não couber em monitores menores;
+13. o PDF original nunca é alterado e arquivos existentes não são sobrescritos silenciosamente.
+
+O processamento é local. PDFs protegidos por senha ou páginas que não possam ser identificadas são apontados como advertência/erro para revisão.
 
 ## Painel de projetos
 
