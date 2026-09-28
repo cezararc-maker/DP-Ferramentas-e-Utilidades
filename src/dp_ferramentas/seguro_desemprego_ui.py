@@ -3,8 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QDialog,
     QFileDialog,
@@ -16,13 +17,73 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QSplitter,
     QTableWidget,
     QTableWidgetItem,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from .seguro_desemprego import AnalysisResult, ProcessingResult, analyze_pdfs, process_analysis
+
+
+class PdfDropListWidget(QListWidget):
+    files_dropped = Signal(list)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setDragDropMode(QAbstractItemView.DropOnly)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setMinimumHeight(62)
+        self.setMaximumHeight(76)
+        self.setStyleSheet(
+            """
+            QListWidget {
+                border: 1px dashed #4f6b84;
+                border-radius: 8px;
+                padding: 4px;
+            }
+            QListWidget::item {
+                padding: 3px 5px;
+            }
+            """
+        )
+
+    @staticmethod
+    def _extract_pdf_paths(mime_data) -> list[str]:
+        if not mime_data.hasUrls():
+            return []
+
+        paths: list[str] = []
+        for url in mime_data.urls():
+            if not url.isLocalFile():
+                continue
+            path = Path(url.toLocalFile())
+            if path.is_file() and path.suffix.casefold() == ".pdf":
+                paths.append(str(path))
+        return paths
+
+    def dragEnterEvent(self, event) -> None:
+        if self._extract_pdf_paths(event.mimeData()):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event) -> None:
+        if self._extract_pdf_paths(event.mimeData()):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event) -> None:
+        paths = self._extract_pdf_paths(event.mimeData())
+        if not paths:
+            event.ignore()
+            return
+        self.files_dropped.emit(paths)
+        event.acceptProposedAction()
 
 
 class SeguroDesempregoWindow(QDialog):
@@ -37,8 +98,8 @@ class SeguroDesempregoWindow(QDialog):
         self.processing: ProcessingResult | None = None
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(22, 22, 22, 22)
-        layout.setSpacing(12)
+        layout.setContentsMargins(20, 18, 20, 18)
+        layout.setSpacing(8)
 
         title = QLabel("Organizador de Requerimento de Seguro-Desemprego")
         title.setObjectName("sectionTitle")
@@ -64,8 +125,14 @@ class SeguroDesempregoWindow(QDialog):
         input_actions.addStretch()
         layout.addLayout(input_actions)
 
-        self.file_list = QListWidget()
-        self.file_list.setMaximumHeight(120)
+        drop_hint = QLabel(
+            "Arquivos selecionados — você também pode arrastar e soltar um ou mais PDFs aqui."
+        )
+        drop_hint.setObjectName("description")
+        layout.addWidget(drop_hint)
+
+        self.file_list = PdfDropListWidget()
+        self.file_list.files_dropped.connect(self.add_dropped_files)
         layout.addWidget(self.file_list)
 
         output_row = QHBoxLayout()
@@ -94,9 +161,10 @@ class SeguroDesempregoWindow(QDialog):
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
+        self.progress.setMaximumHeight(24)
         layout.addWidget(self.progress)
 
-        self.status = QLabel("Selecione um ou mais PDFs emitidos pelo portal do MTE.")
+        self.status = QLabel("Selecione ou arraste um ou mais PDFs emitidos pelo portal do MTE.")
         self.status.setObjectName("description")
         layout.addWidget(self.status)
 
@@ -104,20 +172,57 @@ class SeguroDesempregoWindow(QDialog):
         self.table.setHorizontalHeaderLabels(
             ["Colaborador", "Requerimento", "SD", "CD", "Validação"]
         )
-        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setMinimumHeight(260)
+        self.table.verticalHeader().setVisible(False)
+
+        header = self.table.horizontalHeader()
+        header.setMinimumHeight(32)
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
         for column in (1, 2, 3, 4):
-            self.table.horizontalHeader().setSectionResizeMode(column, QHeaderView.ResizeToContents)
-        layout.addWidget(self.table, 1)
+            header.setSectionResizeMode(column, QHeaderView.ResizeToContents)
+        header.setStyleSheet(
+            """
+            QHeaderView::section {
+                background-color: #edf1f5;
+                color: #000000;
+                font-weight: 700;
+                padding: 6px 8px;
+                border: 1px solid #c4ccd4;
+            }
+            """
+        )
+
+        table_host = QWidget()
+        table_layout = QVBoxLayout(table_host)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        table_layout.setSpacing(0)
+        table_layout.addWidget(self.table)
+
+        notes_host = QWidget()
+        notes_layout = QVBoxLayout(notes_host)
+        notes_layout.setContentsMargins(0, 0, 0, 0)
+        notes_layout.setSpacing(4)
 
         notes_label = QLabel("Resultado / advertências")
         notes_label.setObjectName("projectMetaKey")
-        layout.addWidget(notes_label)
+        notes_layout.addWidget(notes_label)
+
         self.notes = QTextEdit()
         self.notes.setReadOnly(True)
-        self.notes.setMaximumHeight(120)
-        layout.addWidget(self.notes)
+        self.notes.setMinimumHeight(58)
+        self.notes.setMaximumHeight(95)
+        notes_layout.addWidget(self.notes)
+
+        self.result_splitter = QSplitter(Qt.Vertical)
+        self.result_splitter.setChildrenCollapsible(False)
+        self.result_splitter.addWidget(table_host)
+        self.result_splitter.addWidget(notes_host)
+        self.result_splitter.setStretchFactor(0, 5)
+        self.result_splitter.setStretchFactor(1, 1)
+        self.result_splitter.setSizes([430, 82])
+        layout.addWidget(self.result_splitter, 1)
 
         footer = QHBoxLayout()
         self.open_output_button = QPushButton("Abrir pasta de resultado")
@@ -137,6 +242,28 @@ class SeguroDesempregoWindow(QDialog):
         footer.addWidget(close)
         layout.addLayout(footer)
 
+    def _add_files(self, raw_paths: list[str]) -> int:
+        known = {path.resolve() for path in self.input_paths}
+        added = 0
+        for raw in raw_paths:
+            path = Path(raw).resolve()
+            if not path.is_file() or path.suffix.casefold() != ".pdf" or path in known:
+                continue
+            self.input_paths.append(path)
+            known.add(path)
+            added += 1
+
+        if added:
+            self._refresh_files()
+            if self.input_paths and not self.output_edit.text().strip():
+                default = self.input_paths[0].parent / "Seguro-Desemprego Organizado"
+                self.output_edit.setText(str(default))
+            self._reset_analysis()
+            self.status.setText(
+                f"{len(self.input_paths)} PDF(s) selecionado(s). Pronto para analisar."
+            )
+        return added
+
     def select_files(self) -> None:
         files, _ = QFileDialog.getOpenFileNames(
             self,
@@ -144,25 +271,21 @@ class SeguroDesempregoWindow(QDialog):
             "",
             "Arquivos PDF (*.pdf)",
         )
-        if not files:
-            return
-        known = {path.resolve() for path in self.input_paths}
-        for raw in files:
-            path = Path(raw).resolve()
-            if path not in known:
-                self.input_paths.append(path)
-                known.add(path)
-        self._refresh_files()
-        if self.input_paths and not self.output_edit.text().strip():
-            default = self.input_paths[0].parent / "Seguro-Desemprego Organizado"
-            self.output_edit.setText(str(default))
-        self._reset_analysis()
+        if files:
+            self._add_files(files)
+
+    def add_dropped_files(self, files: list[str]) -> None:
+        added = self._add_files(files)
+        if not added:
+            self.status.setText(
+                "Nenhum PDF novo foi adicionado. Arquivos duplicados ou não-PDF foram ignorados."
+            )
 
     def clear_files(self) -> None:
         self.input_paths.clear()
         self.file_list.clear()
         self._reset_analysis()
-        self.status.setText("Selecione um ou mais PDFs emitidos pelo portal do MTE.")
+        self.status.setText("Selecione ou arraste um ou mais PDFs emitidos pelo portal do MTE.")
 
     def _refresh_files(self) -> None:
         self.file_list.clear()
@@ -215,7 +338,11 @@ class SeguroDesempregoWindow(QDialog):
         assert self.analysis is not None
         self.table.setRowCount(len(self.analysis.bundles))
         for row, bundle in enumerate(self.analysis.bundles):
-            status = "OK — pronto para gerar" if bundle.valid else "REVISAR — " + " ".join(bundle.issues)
+            status = (
+                "OK — pronto para gerar"
+                if bundle.valid
+                else "REVISAR — " + " ".join(bundle.issues)
+            )
             values = [
                 bundle.name or "Não identificado",
                 bundle.request_number,
