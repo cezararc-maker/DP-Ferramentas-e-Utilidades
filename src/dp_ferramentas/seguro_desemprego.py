@@ -85,6 +85,20 @@ class ProcessingResult:
     distribution_issues: list[AnalysisIssue] = field(default_factory=list)
 
 
+@dataclass(frozen=True, slots=True)
+class EmployeeFolderDiagnostic:
+    request_number: str
+    employee_name: str
+    status: str
+    folder: Path | None
+    detail: str
+    candidates: tuple[Path, ...] = ()
+
+    @property
+    def safe(self) -> bool:
+        return self.status in {"exact", "relaxed"} and self.folder is not None
+
+
 def _plain(value: str) -> str:
     normalized = unicodedata.normalize("NFKD", value)
     return "".join(ch for ch in normalized if not unicodedata.combining(ch)).casefold()
@@ -304,37 +318,108 @@ def normalize_employee_folder_name(name: str, ignore_prepositions: bool = False)
     return " ".join(tokens)
 
 
-def find_employee_folder(root: Path, employee_name: str) -> tuple[Path | None, str]:
+def diagnose_employee_folder(
+    root: Path,
+    employee_name: str,
+    request_number: str = "",
+) -> EmployeeFolderDiagnostic:
     root = Path(root).resolve()
     if not root.exists() or not root.is_dir():
-        return None, "A pasta principal das rescisões não existe ou não é uma pasta."
+        return EmployeeFolderDiagnostic(
+            request_number=request_number,
+            employee_name=employee_name,
+            status="invalid_root",
+            folder=None,
+            detail="A pasta principal das rescisões não existe ou não é uma pasta.",
+        )
 
-    folders = [item for item in root.iterdir() if item.is_dir()]
+    folders = [item.resolve() for item in root.iterdir() if item.is_dir()]
     exact_key = normalize_employee_folder_name(employee_name)
-    exact = [
+    exact = tuple(
         folder
         for folder in folders
         if normalize_employee_folder_name(folder.name) == exact_key
-    ]
+    )
     if len(exact) == 1:
-        return exact[0], "nome exato"
+        return EmployeeFolderDiagnostic(
+            request_number=request_number,
+            employee_name=employee_name,
+            status="exact",
+            folder=exact[0],
+            detail="Pasta encontrada por nome exato.",
+            candidates=exact,
+        )
     if len(exact) > 1:
-        return None, "Há mais de uma pasta com correspondência exata para o colaborador."
+        return EmployeeFolderDiagnostic(
+            request_number=request_number,
+            employee_name=employee_name,
+            status="ambiguous",
+            folder=None,
+            detail="Há mais de uma pasta com correspondência exata para o colaborador.",
+            candidates=exact,
+        )
 
     relaxed_key = normalize_employee_folder_name(employee_name, ignore_prepositions=True)
-    relaxed = [
+    relaxed = tuple(
         folder
         for folder in folders
         if normalize_employee_folder_name(folder.name, ignore_prepositions=True) == relaxed_key
-    ]
+    )
     if len(relaxed) == 1:
-        return relaxed[0], "nome equivalente ignorando de/da/do/das/dos"
-    if len(relaxed) > 1:
-        return None, (
-            "Há mais de uma pasta possível quando são ignoradas as preposições "
-            "de/da/do/das/dos."
+        return EmployeeFolderDiagnostic(
+            request_number=request_number,
+            employee_name=employee_name,
+            status="relaxed",
+            folder=relaxed[0],
+            detail="Pasta encontrada ignorando DE, DA, DO, DAS e DOS.",
+            candidates=relaxed,
         )
-    return None, "Nenhuma pasta correspondente ao nome do colaborador foi encontrada."
+    if len(relaxed) > 1:
+        return EmployeeFolderDiagnostic(
+            request_number=request_number,
+            employee_name=employee_name,
+            status="ambiguous",
+            folder=None,
+            detail=(
+                "Há mais de uma pasta possível quando são ignoradas as preposições "
+                "DE, DA, DO, DAS e DOS."
+            ),
+            candidates=relaxed,
+        )
+
+    return EmployeeFolderDiagnostic(
+        request_number=request_number,
+        employee_name=employee_name,
+        status="missing",
+        folder=None,
+        detail="Nenhuma pasta correspondente ao nome do colaborador foi encontrada.",
+    )
+
+
+def diagnose_employee_folders(
+    analysis: AnalysisResult,
+    root: Path,
+) -> dict[str, EmployeeFolderDiagnostic]:
+    return {
+        bundle.request_number: diagnose_employee_folder(
+            root,
+            bundle.name,
+            bundle.request_number,
+        )
+        for bundle in analysis.valid_bundles
+    }
+
+
+def find_employee_folder(root: Path, employee_name: str) -> tuple[Path | None, str]:
+    diagnostic = diagnose_employee_folder(root, employee_name)
+    if diagnostic.safe:
+        mode = (
+            "nome exato"
+            if diagnostic.status == "exact"
+            else "nome equivalente ignorando de/da/do/das/dos"
+        )
+        return diagnostic.folder, mode
+    return None, diagnostic.detail
 
 
 def _unique_output_path(output_dir: Path, bundle: DocumentBundle) -> Path:
@@ -386,9 +471,26 @@ def process_analysis(
     if direct_root is not None and (not direct_root.exists() or not direct_root.is_dir()):
         raise ValueError("A pasta principal das rescisões não existe ou não é uma pasta.")
 
+    direct_diagnostics: dict[str, EmployeeFolderDiagnostic] = {}
+    distribution_issues: list[AnalysisIssue] = []
+    if direct_root is not None:
+        direct_diagnostics = diagnose_employee_folders(analysis, direct_root)
+        unsafe = [item for item in direct_diagnostics.values() if not item.safe]
+        if unsafe:
+            details = "; ".join(
+                f"{item.employee_name}: {item.detail}"
+                for item in unsafe[:5]
+            )
+            if len(unsafe) > 5:
+                details += f"; e mais {len(unsafe) - 5} pendência(s)"
+            raise ValueError(
+                "Diagnóstico das pastas de rescisão possui pendências. "
+                "Nenhum PDF foi gravado nas pastas originais. "
+                + details
+            )
+
     readers: dict[Path, PdfReader] = {}
     generated: list[Path] = []
-    distribution_issues: list[AnalysisIssue] = []
 
     for index, bundle in enumerate(valid, start=1):
         if progress:
@@ -396,16 +498,11 @@ def process_analysis(
 
         target_dir = output_dir
         if direct_root is not None:
-            target_dir, match_info = find_employee_folder(direct_root, bundle.name)
+            target_dir = direct_diagnostics[bundle.request_number].folder
             if target_dir is None:
-                distribution_issues.append(
-                    AnalysisIssue(
-                        "ERRO",
-                        f"Distribuição não realizada: {match_info}",
-                        request_number=bundle.request_number,
-                    )
+                raise RuntimeError(
+                    "Diagnóstico inconsistente: pasta de destino não disponível."
                 )
-                continue
         elif create_employee_folders:
             target_dir = output_dir / safe_employee_filename(bundle.name)
             target_dir.mkdir(parents=True, exist_ok=True)
