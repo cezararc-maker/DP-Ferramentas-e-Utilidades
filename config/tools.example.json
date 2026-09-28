@@ -57,6 +57,16 @@
       "status": "Em desenvolvimento",
       "icon": "FOL",
       "documentation": "https://github.com/cezararc-maker/Controle_Folha_de_Pagamento"
+    },
+    {
+      "id": "seguro-desemprego-organizador",
+      "name": "Seguro-Desemprego — Organizar SD/CD",
+      "description": "Identifica Requerimento SD e Comunicação de Dispensa CD, valida requerimento, nome e CPF e gera um PDF por colaborador.",
+      "category": "Documentos",
+      "kind": "internal",
+      "target": "seguro-desemprego",
+      "status": "Novo",
+      "icon": "SD"
     }
   ]
 }
