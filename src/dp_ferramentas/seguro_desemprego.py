@@ -12,6 +12,7 @@ from pypdf import PdfReader, PdfWriter
 DOC_SD = "SD"
 DOC_CD = "CD"
 ProgressCallback = Callable[[int, int, str], None]
+_NAME_PREPOSITIONS = {"de", "da", "do", "das", "dos"}
 
 _REQUEST_PATTERNS = (
     re.compile(
@@ -81,6 +82,7 @@ class ProcessingResult:
     generated_files: list[Path]
     log_path: Path
     warnings_path: Path | None
+    distribution_issues: list[AnalysisIssue] = field(default_factory=list)
 
 
 def _plain(value: str) -> str:
@@ -294,6 +296,47 @@ def safe_employee_filename(name: str) -> str:
     return value or "COLABORADOR"
 
 
+def normalize_employee_folder_name(name: str, ignore_prepositions: bool = False) -> str:
+    value = _plain(name)
+    tokens = re.sub(r"[^a-z0-9]+", " ", value).split()
+    if ignore_prepositions:
+        tokens = [token for token in tokens if token not in _NAME_PREPOSITIONS]
+    return " ".join(tokens)
+
+
+def find_employee_folder(root: Path, employee_name: str) -> tuple[Path | None, str]:
+    root = Path(root).resolve()
+    if not root.exists() or not root.is_dir():
+        return None, "A pasta principal das rescisões não existe ou não é uma pasta."
+
+    folders = [item for item in root.iterdir() if item.is_dir()]
+    exact_key = normalize_employee_folder_name(employee_name)
+    exact = [
+        folder
+        for folder in folders
+        if normalize_employee_folder_name(folder.name) == exact_key
+    ]
+    if len(exact) == 1:
+        return exact[0], "nome exato"
+    if len(exact) > 1:
+        return None, "Há mais de uma pasta com correspondência exata para o colaborador."
+
+    relaxed_key = normalize_employee_folder_name(employee_name, ignore_prepositions=True)
+    relaxed = [
+        folder
+        for folder in folders
+        if normalize_employee_folder_name(folder.name, ignore_prepositions=True) == relaxed_key
+    ]
+    if len(relaxed) == 1:
+        return relaxed[0], "nome equivalente ignorando de/da/do/das/dos"
+    if len(relaxed) > 1:
+        return None, (
+            "Há mais de uma pasta possível quando são ignoradas as preposições "
+            "de/da/do/das/dos."
+        )
+    return None, "Nenhuma pasta correspondente ao nome do colaborador foi encontrada."
+
+
 def _unique_output_path(output_dir: Path, bundle: DocumentBundle) -> Path:
     base = output_dir / f"SD - {safe_employee_filename(bundle.name)}.pdf"
     if not base.exists():
@@ -330,6 +373,8 @@ def process_analysis(
     analysis: AnalysisResult,
     output_dir: Path,
     progress: ProgressCallback | None = None,
+    create_employee_folders: bool = True,
+    rescisao_root: Path | None = None,
 ) -> ProcessingResult:
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -337,12 +382,34 @@ def process_analysis(
     if not valid:
         raise ValueError("Nenhum conjunto válido (1 SD + 1 CD) foi encontrado para gerar.")
 
+    direct_root = Path(rescisao_root).resolve() if rescisao_root else None
+    if direct_root is not None and (not direct_root.exists() or not direct_root.is_dir()):
+        raise ValueError("A pasta principal das rescisões não existe ou não é uma pasta.")
+
     readers: dict[Path, PdfReader] = {}
     generated: list[Path] = []
+    distribution_issues: list[AnalysisIssue] = []
 
     for index, bundle in enumerate(valid, start=1):
         if progress:
-            progress(index, len(valid), f"Gerando {bundle.name}")
+            progress(index, len(valid), f"Preparando {bundle.name}")
+
+        target_dir = output_dir
+        if direct_root is not None:
+            target_dir, match_info = find_employee_folder(direct_root, bundle.name)
+            if target_dir is None:
+                distribution_issues.append(
+                    AnalysisIssue(
+                        "ERRO",
+                        f"Distribuição não realizada: {match_info}",
+                        request_number=bundle.request_number,
+                    )
+                )
+                continue
+        elif create_employee_folders:
+            target_dir = output_dir / safe_employee_filename(bundle.name)
+            target_dir.mkdir(parents=True, exist_ok=True)
+
         writer = PdfWriter()
         for record in (bundle.sd_pages[0], bundle.cd_pages[0]):
             reader = readers.get(record.source)
@@ -351,30 +418,42 @@ def process_analysis(
                 readers[record.source] = reader
             writer.add_page(reader.pages[record.page_index])
 
-        target = _unique_output_path(output_dir, bundle)
+        target = _unique_output_path(target_dir, bundle)
         with target.open("wb") as handle:
             writer.write(handle)
         generated.append(target)
 
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_path = output_dir / f"processamento_sd_{stamp}.txt"
+    all_issues = [*analysis.issues, *distribution_issues]
+    destination_mode = (
+        f"Distribuição direta em pastas existentes: {direct_root}"
+        if direct_root is not None
+        else (
+            "Uma pasta por colaborador"
+            if create_employee_folders
+            else "Arquivos diretamente na pasta de saída"
+        )
+    )
     lines = [
         "DP - Ferramentas & Utilidades",
         "Organizador de Seguro-Desemprego",
         "=" * 52,
         f"Executado em: {datetime.now().isoformat(timespec='seconds')}",
+        f"Modo de destino: {destination_mode}",
         f"Páginas analisadas: {analysis.total_pages}",
         f"Conjuntos identificados: {len(analysis.bundles)}",
         f"Conjuntos válidos gerados: {len(generated)}",
-        f"Advertências/erros: {len(analysis.issues)}",
+        f"Não distribuídos: {len(distribution_issues)}",
+        f"Advertências/erros: {len(all_issues)}",
         "",
         "Arquivos gerados:",
     ]
-    lines.extend(f"- {path.name}" for path in generated)
+    lines.extend(f"- {path}" for path in generated)
     log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     warnings_path: Path | None = None
-    if analysis.issues:
+    if all_issues:
         warnings_path = output_dir / f"advertencias_sd_{stamp}.txt"
         warning_lines = [
             "ADVERTÊNCIAS - ORGANIZADOR DE SEGURO-DESEMPREGO",
@@ -382,11 +461,12 @@ def process_analysis(
             "Nenhum CPF é gravado neste relatório.",
             "",
         ]
-        warning_lines.extend(_issue_line(issue) for issue in analysis.issues)
+        warning_lines.extend(_issue_line(issue) for issue in all_issues)
         warnings_path.write_text("\n".join(warning_lines) + "\n", encoding="utf-8")
 
     return ProcessingResult(
         generated_files=generated,
         log_path=log_path,
         warnings_path=warnings_path,
+        distribution_issues=distribution_issues,
     )
