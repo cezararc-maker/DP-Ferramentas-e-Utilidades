@@ -26,8 +26,11 @@ Fluxo:
 3. o agrupamento usa o número do requerimento como chave principal;
 4. nome e CPF são usados como validações adicionais;
 5. somente conjuntos com exatamente 1 SD + 1 CD e dados compatíveis são liberados para geração;
-6. os arquivos são salvos como `SD - NOME DO COLABORADOR.pdf`;
-7. o PDF original nunca é alterado e arquivos existentes não são sobrescritos silenciosamente.
+6. por padrão, a ferramenta cria uma pasta com o nome completo de cada colaborador e salva dentro dela `SD - NOME DO COLABORADOR.pdf`;
+7. alternativamente, é possível selecionar a pasta principal das rescisões e distribuir os PDFs diretamente nas pastas já existentes;
+8. no modo de distribuição direta, a busca tenta primeiro o nome exato e, se necessário, compara novamente ignorando `DE`, `DA`, `DO`, `DAS` e `DOS`;
+9. a distribuição direta só ocorre quando existe uma única pasta correspondente; ausências ou ambiguidades são registradas como advertência e nenhum arquivo é colocado automaticamente naquele caso;
+10. o PDF original nunca é alterado e arquivos existentes não são sobrescritos silenciosamente.
 
 O processamento é local. PDFs protegidos por senha ou páginas que não possam ser identificadas são apontados como advertência/erro para revisão.
 
