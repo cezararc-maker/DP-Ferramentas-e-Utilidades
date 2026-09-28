@@ -19,7 +19,7 @@ _REQUEST_PATTERNS = (
         re.IGNORECASE,
     ),
     re.compile(
-        r"Comunica(?:ç|c)ão de Dispensa\s*-\s*CD\s*[\r\n ]+(\d{8,14})",
+        r"Comunica(?:ção|cao) de Dispensa\s*-\s*CD\s*[\r\n ]+(\d{8,14})",
         re.IGNORECASE,
     ),
 )
