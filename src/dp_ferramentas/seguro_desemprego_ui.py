@@ -179,9 +179,10 @@ class SeguroDesempregoWindow(QDialog):
 
         header = self.table.horizontalHeader()
         header.setMinimumHeight(32)
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        for column in (1, 2, 3, 4):
-            header.setSectionResizeMode(column, QHeaderView.ResizeToContents)
+        header.setMinimumSectionSize(48)
+        header.setStretchLastSection(False)
+        for column in range(self.table.columnCount()):
+            header.setSectionResizeMode(column, QHeaderView.Interactive)
         header.setStyleSheet(
             """
             QHeaderView::section {
@@ -355,6 +356,18 @@ class SeguroDesempregoWindow(QDialog):
                 if column in (2, 3):
                     item.setTextAlignment(Qt.AlignCenter)
                 self.table.setItem(row, column, item)
+
+        self.table.resizeColumnsToContents()
+        initial_widths = {
+            0: 260,
+            1: 125,
+            2: 55,
+            3: 55,
+            4: 210,
+        }
+        for column, preferred in initial_widths.items():
+            content_width = self.table.columnWidth(column)
+            self.table.setColumnWidth(column, min(content_width, preferred))
 
         valid = len(self.analysis.valid_bundles)
         invalid = len(self.analysis.bundles) - valid
