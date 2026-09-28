@@ -10,9 +10,26 @@ Aplicativo desktop para centralizar ferramentas, automações, documentos e o ac
 - fluxo visual integrado entre o Leitor PDF e o FGTS por Obra / Poligonal;
 - catálogo local personalizável e logs de execução;
 - tema claro/escuro;
+- **Organizador de Seguro-Desemprego**: identifica SD/CD, agrupa por requerimento, valida nome/CPF e gera um PDF por colaborador sem alterar o original;
 - **painel oficial de projetos** com status, progresso estimado, última atualização, último commit local, bloqueio, próxima tarefa e dependências;
 - filtros de projetos por `ATIVO`, `BLOQUEADO`, `PAUSADO`, `PLANEJADO` e `FINALIZADO`;
 - ações por projeto para abrir a pasta local, abrir o GitHub e executar quando houver comando configurado.
+
+## Organizador de Seguro-Desemprego
+
+Na categoria **Documentos**, abra **Seguro-Desemprego — Organizar SD/CD**.
+
+Fluxo:
+
+1. selecione um ou mais PDFs emitidos pelo portal do MTE;
+2. a ferramenta identifica cada página como Requerimento SD ou Comunicação de Dispensa CD;
+3. o agrupamento usa o número do requerimento como chave principal;
+4. nome e CPF são usados como validações adicionais;
+5. somente conjuntos com exatamente 1 SD + 1 CD e dados compatíveis são liberados para geração;
+6. os arquivos são salvos como `SD - NOME DO COLABORADOR.pdf`;
+7. o PDF original nunca é alterado e arquivos existentes não são sobrescritos silenciosamente.
+
+O processamento é local. PDFs protegidos por senha ou páginas que não possam ser identificadas são apontados como advertência/erro para revisão.
 
 ## Painel de projetos
 
