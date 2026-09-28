@@ -7,6 +7,8 @@ from dp_ferramentas.seguro_desemprego import (
     DocumentBundle,
     PageRecord,
     _bundle_records,
+    find_employee_folder,
+    normalize_employee_folder_name,
     parse_page_text,
     process_analysis,
     safe_employee_filename,
@@ -117,6 +119,7 @@ def test_process_analysis_generates_sd_then_cd_and_never_overwrites(tmp_path):
     second = process_analysis(analysis, output)
 
     assert source.exists()
+    assert first.generated_files[0].parent == output / "MARIA EXEMPLO"
     assert first.generated_files[0].name == "SD - MARIA EXEMPLO.pdf"
     assert second.generated_files[0].name == "SD - MARIA EXEMPLO - 7000000001.pdf"
     assert len(PdfReader(str(first.generated_files[0])).pages) == 2
@@ -133,3 +136,127 @@ def test_parse_cd_accepts_header_without_accents(tmp_path):
     assert issues == []
     assert record is not None
     assert record.document_type == "CD"
+
+
+def test_normalize_employee_folder_name_ignores_requested_prepositions():
+    assert normalize_employee_folder_name("JOÃO DA SILVA", ignore_prepositions=True) == "joao silva"
+    assert normalize_employee_folder_name("MARIA DOS SANTOS", ignore_prepositions=True) == "maria santos"
+    assert normalize_employee_folder_name("PEDRO DE SOUZA", ignore_prepositions=True) == "pedro souza"
+
+
+def test_find_employee_folder_matches_name_without_preposition(tmp_path):
+    root = tmp_path / "Rescisoes"
+    root.mkdir()
+    target = root / "JOAO SILVA"
+    target.mkdir()
+
+    found, mode = find_employee_folder(root, "JOÃO DA SILVA")
+
+    assert found == target.resolve()
+    assert "ignorando" in mode
+
+
+def test_find_employee_folder_prefers_exact_match(tmp_path):
+    root = tmp_path / "Rescisoes"
+    root.mkdir()
+    exact = root / "JOAO DA SILVA"
+    relaxed = root / "JOAO SILVA"
+    exact.mkdir()
+    relaxed.mkdir()
+
+    found, mode = find_employee_folder(root, "JOÃO DA SILVA")
+
+    assert found == exact.resolve()
+    assert mode == "nome exato"
+
+
+def test_find_employee_folder_rejects_ambiguous_relaxed_match(tmp_path):
+    root = tmp_path / "Rescisoes"
+    root.mkdir()
+    (root / "JOAO DA SILVA").mkdir()
+    (root / "JOAO DE SILVA").mkdir()
+
+    found, message = find_employee_folder(root, "JOAO DO SILVA")
+
+    assert found is None
+    assert "mais de uma pasta possível" in message
+
+
+def test_process_analysis_distributes_into_existing_rescisao_folder(tmp_path):
+    source = tmp_path / "origem.pdf"
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=300)
+    writer.add_blank_page(width=200, height=300)
+    with source.open("wb") as handle:
+        writer.write(handle)
+
+    sd = PageRecord(source, 0, "SD", "7000000002", "JOAO DA SILVA", "111.222.333-44")
+    cd = PageRecord(source, 1, "CD", "7000000002", "JOAO DA SILVA", "111.222.333-44")
+    analysis = AnalysisResult(
+        bundles=[
+            DocumentBundle(
+                request_number="7000000002",
+                name="JOAO DA SILVA",
+                cpf="111.222.333-44",
+                sd_pages=[sd],
+                cd_pages=[cd],
+            )
+        ],
+        issues=[],
+        total_pages=2,
+    )
+
+    output = tmp_path / "relatorios"
+    rescisao_root = tmp_path / "Rescisoes"
+    destination = rescisao_root / "JOAO SILVA"
+    destination.mkdir(parents=True)
+
+    result = process_analysis(
+        analysis,
+        output,
+        rescisao_root=rescisao_root,
+    )
+
+    assert result.generated_files == [destination / "SD - JOAO DA SILVA.pdf"]
+    assert result.distribution_issues == []
+    assert result.warnings_path is None
+
+
+def test_process_analysis_warns_and_skips_when_rescisao_folder_is_missing(tmp_path):
+    source = tmp_path / "origem.pdf"
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=300)
+    writer.add_blank_page(width=200, height=300)
+    with source.open("wb") as handle:
+        writer.write(handle)
+
+    sd = PageRecord(source, 0, "SD", "7000000003", "ANA DAS FLORES", "111.222.333-44")
+    cd = PageRecord(source, 1, "CD", "7000000003", "ANA DAS FLORES", "111.222.333-44")
+    analysis = AnalysisResult(
+        bundles=[
+            DocumentBundle(
+                request_number="7000000003",
+                name="ANA DAS FLORES",
+                cpf="111.222.333-44",
+                sd_pages=[sd],
+                cd_pages=[cd],
+            )
+        ],
+        issues=[],
+        total_pages=2,
+    )
+
+    output = tmp_path / "relatorios"
+    rescisao_root = tmp_path / "Rescisoes"
+    rescisao_root.mkdir()
+
+    result = process_analysis(
+        analysis,
+        output,
+        rescisao_root=rescisao_root,
+    )
+
+    assert result.generated_files == []
+    assert len(result.distribution_issues) == 1
+    assert "Nenhuma pasta correspondente" in result.distribution_issues[0].message
+    assert result.warnings_path is not None
