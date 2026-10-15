@@ -100,8 +100,8 @@
       "next_task": "Testado e validado pelo operador; usar na rotina e revalidar após alterações.",
       "dependencies": [],
       "icon": "PDF",
-      "launch_kind": "html",
-      "launch_target": "%USERPROFILE%\\Desktop\\GitHub\\Leitor_PDF_Extrato_Mensal_Poligonal\\Leitor_FGTS.html",
+      "launch_kind": "batch",
+      "launch_target": "%USERPROFILE%\\Desktop\\GitHub\\Leitor_PDF_Extrato_Mensal_Poligonal\\ABRIR_LEITOR_FGTS.bat",
       "blocker": ""
     },
     {

@@ -53,7 +53,7 @@ Quando a pasta local cadastrada é um repositório Git, o aplicativo tenta mostr
 
 ## Fluxo integrado - FGTS Poligonal
 
-1. **Leitor PDF Extrato Mensal - Poligonal** abre `Leitor_FGTS.html` e gera a planilha XLSX.
+1. **Leitor PDF Extrato Mensal - Poligonal** abre `ABRIR_LEITOR_FGTS.bat`; o botão de integração envia a planilha e abre o FGTS por Obra já com ela carregada.
 2. **FGTS por Obra / Poligonal** abre `scripts\executar.bat`, importa a planilha e continua a automação.
 
 As duas ferramentas foram testadas e validadas pelo operador em 15/10/2026. As cópias antigas dos dois registros no catálogo local são atualizadas ao iniciar o DP, preservando as demais ferramentas personalizadas.

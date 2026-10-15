@@ -68,8 +68,10 @@ def _sync_validated_fgts(destination: Path, bundled_relative: str, key: str) -> 
         if entry.get("id") not in ids or entry["id"] not in official:
             continue
         target_field = "target" if key == "tools" else "launch_target"
-        if entry.get("id") == "leitor-pdf-poligonal" and str(entry.get(target_field, "")).lower().endswith("\\index.html"):
+        if entry.get("id") == "leitor-pdf-poligonal" and str(entry.get(target_field, "")).lower().endswith(("\\index.html", "\\leitor_fgts.html")):
             entry[target_field] = official[entry["id"]][target_field]
+            kind_field = "kind" if key == "tools" else "launch_kind"
+            entry[kind_field] = official[entry["id"]][kind_field]
             changed = True
         for field in fields:
             new = official[entry["id"]][field]

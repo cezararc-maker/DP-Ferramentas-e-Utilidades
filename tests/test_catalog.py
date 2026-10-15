@@ -76,7 +76,8 @@ def test_existing_fgts_entries_are_updated_without_touching_others(monkeypatch, 
     user_config_path().write_text(json.dumps({"tools": [reader, custom]}), encoding="utf-8")
     ensure_user_config()
     saved = {item["id"]: item for item in json.loads(user_config_path().read_text(encoding="utf-8"))["tools"]}
-    assert saved["leitor-pdf-poligonal"]["target"].endswith("Leitor_FGTS.html")
+    assert saved["leitor-pdf-poligonal"]["target"].endswith("ABRIR_LEITOR_FGTS.bat")
+    assert saved["leitor-pdf-poligonal"]["kind"] == "batch"
     assert saved["leitor-pdf-poligonal"]["status"] == "Testado e validado"
     assert saved["custom"] == custom
 
@@ -88,3 +89,23 @@ def test_existing_fgts_entries_are_updated_without_touching_others(monkeypatch, 
     assert saved_project["status"] == "FINALIZADO"
     assert saved_project["progress"] == 100
     assert saved_project["blocker"] == ""
+
+
+def test_recent_html_reader_catalog_migrates_to_integrated_launcher(monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    target = r"%USERPROFILE%\Desktop\GitHub\Leitor_PDF_Extrato_Mensal_Poligonal\Leitor_FGTS.html"
+    tool = {"id": "leitor-pdf-poligonal", "name": "Leitor", "description": "x", "category": "FGTS",
+            "kind": "html", "target": target, "status": "Testado e validado"}
+    user_config_path().write_text(json.dumps({"tools": [tool]}), encoding="utf-8")
+    ensure_user_config()
+    saved = json.loads(user_config_path().read_text(encoding="utf-8"))["tools"][0]
+    assert saved["target"].endswith("ABRIR_LEITOR_FGTS.bat")
+    assert saved["kind"] == "batch"
+
+    project = {"id": "leitor-pdf-poligonal", "name": "Leitor", "summary": "x", "status": "FINALIZADO",
+               "progress": 100, "launch_kind": "html", "launch_target": target}
+    user_projects_path().write_text(json.dumps({"projects": [project]}), encoding="utf-8")
+    ensure_projects_config()
+    saved_project = json.loads(user_projects_path().read_text(encoding="utf-8"))["projects"][0]
+    assert saved_project["launch_target"].endswith("ABRIR_LEITOR_FGTS.bat")
+    assert saved_project["launch_kind"] == "batch"
