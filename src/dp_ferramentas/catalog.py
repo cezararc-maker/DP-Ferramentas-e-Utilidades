@@ -52,16 +52,43 @@ def _merge_missing_entries(destination: Path, bundled_relative: str, key: str) -
     return destination
 
 
-def ensure_user_config() -> Path:
-    return _merge_missing_entries(
-        user_config_path(),
-        "config/tools.example.json",
-        "tools",
+def _sync_validated_fgts(destination: Path, bundled_relative: str, key: str) -> Path:
+    """Atualiza somente os dois registros validados nas cópias já existentes."""
+    current = json.loads(destination.read_text(encoding="utf-8"))
+    bundled = json.loads(resource_path(bundled_relative).read_text(encoding="utf-8"))
+    official = {entry["id"]: entry for entry in bundled[key]}
+    fields = ("status",) if key == "tools" else (
+        "status", "progress", "last_update", "blocker", "next_task",
     )
+    changed = False
+    ids = {"leitor-pdf-poligonal", "fgts-obra-poligonal"} if key == "tools" else {
+        "leitor-pdf-poligonal", "fgts-poligonal",
+    }
+    for entry in current.get(key, []):
+        if entry.get("id") not in ids or entry["id"] not in official:
+            continue
+        target_field = "target" if key == "tools" else "launch_target"
+        if entry.get("id") == "leitor-pdf-poligonal" and str(entry.get(target_field, "")).lower().endswith("\\index.html"):
+            entry[target_field] = official[entry["id"]][target_field]
+            changed = True
+        for field in fields:
+            new = official[entry["id"]][field]
+            if entry.get(field) != new:
+                entry[field] = new
+                changed = True
+    if changed:
+        destination.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return destination
+
+
+def ensure_user_config() -> Path:
+    path = _merge_missing_entries(user_config_path(), "config/tools.example.json", "tools")
+    return _sync_validated_fgts(path, "config/tools.example.json", "tools")
 
 
 def ensure_projects_config() -> Path:
-    return _ensure_config(user_projects_path(), "config/projects.example.json")
+    path = _ensure_config(user_projects_path(), "config/projects.example.json")
+    return _sync_validated_fgts(path, "config/projects.example.json", "projects")
 
 
 def load_tools(path: Path | None = None) -> list[ToolDefinition]:

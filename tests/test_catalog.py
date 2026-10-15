@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from dp_ferramentas.catalog import ensure_user_config, load_projects, load_tools, user_config_path
+from dp_ferramentas.catalog import ensure_projects_config, ensure_user_config, load_projects, load_tools, user_config_path, user_projects_path
 from dp_ferramentas.models import ProjectDefinition, ToolDefinition
 
 
@@ -66,3 +66,25 @@ def test_existing_user_catalog_receives_new_bundled_tools_without_losing_custom(
 
     assert "custom" in ids
     assert "seguro-desemprego-organizador" in ids
+
+
+def test_existing_fgts_entries_are_updated_without_touching_others(monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    reader = {"id": "leitor-pdf-poligonal", "name": "Leitor", "description": "x", "category": "FGTS", "kind": "html",
+              "target": r"%USERPROFILE%\Desktop\GitHub\Leitor_PDF_Extrato_Mensal_Poligonal\index.html", "status": "Etapa 1 de 2"}
+    custom = {"id": "custom", "name": "Personalizada", "description": "x", "category": "Outros", "kind": "url", "target": "https://example.com"}
+    user_config_path().write_text(json.dumps({"tools": [reader, custom]}), encoding="utf-8")
+    ensure_user_config()
+    saved = {item["id"]: item for item in json.loads(user_config_path().read_text(encoding="utf-8"))["tools"]}
+    assert saved["leitor-pdf-poligonal"]["target"].endswith("Leitor_FGTS.html")
+    assert saved["leitor-pdf-poligonal"]["status"] == "Testado e validado"
+    assert saved["custom"] == custom
+
+    project = {"id": "fgts-poligonal", "name": "FGTS", "summary": "x", "status": "ATIVO", "progress": 67,
+               "last_update": "17/09/2026", "blocker": "antigo", "next_task": "antiga"}
+    user_projects_path().write_text(json.dumps({"projects": [project]}), encoding="utf-8")
+    ensure_projects_config()
+    saved_project = json.loads(user_projects_path().read_text(encoding="utf-8"))["projects"][0]
+    assert saved_project["status"] == "FINALIZADO"
+    assert saved_project["progress"] == 100
+    assert saved_project["blocker"] == ""
