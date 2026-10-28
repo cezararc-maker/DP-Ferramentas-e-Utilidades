@@ -71,8 +71,8 @@ class DistribuidorDocumentosWindow(QDialog):
         self.analysis: DistributionAnalysis | None = None
 
         self.setWindowTitle("Distribuir documentos nas pastas de rescisão")
-        self.resize(1080, 720)
-        self.setMinimumSize(900, 620)
+        self.resize(1280, 760)
+        self.setMinimumSize(980, 640)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 18)
@@ -114,19 +114,43 @@ class DistribuidorDocumentosWindow(QDialog):
         folder_row.addWidget(folder_button)
         layout.addLayout(folder_row)
 
-        self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(
-            ["Arquivo", "Tipo", "Colaborador", "Pasta encontrada", "Situação"]
+        column_help = QLabel(
+            "<b>Arquivo de origem:</b> documento que será movido &nbsp;|&nbsp; "
+            "<b>Tipo identificado:</b> classificação encontrada &nbsp;|&nbsp; "
+            "<b>Colaborador identificado:</b> nome lido no documento &nbsp;|&nbsp; "
+            "<b>Destino completo:</b> pasta e nome final do arquivo"
         )
+        column_help.setWordWrap(True)
+        layout.addWidget(column_help)
+
+        self.table = QTableWidget(0, 5)
+        headers = [
+            ("Arquivo de origem", "Nome do arquivo selecionado que será movido."),
+            ("Tipo identificado", "Tipo de documento reconhecido pelo programa."),
+            (
+                "Colaborador identificado",
+                "Nome completo do colaborador lido no conteúdo ou no nome do arquivo.",
+            ),
+            (
+                "Destino completo",
+                "Caminho completo, incluindo a pasta do colaborador e o nome final do arquivo.",
+            ),
+            ("Resultado da análise", "Informa se o destino está pronto ou qual correção é necessária."),
+        ]
+        self.table.setHorizontalHeaderLabels([title for title, _ in headers])
+        for column, (_, description) in enumerate(headers):
+            self.table.horizontalHeaderItem(column).setToolTip(description)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.table.verticalHeader().setVisible(False)
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.Stretch)
+        header.setSectionResizeMode(QHeaderView.Interactive)
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.setColumnWidth(0, 270)
+        self.table.setColumnWidth(1, 190)
+        self.table.setColumnWidth(2, 260)
+        self.table.setColumnWidth(3, 430)
         layout.addWidget(self.table, 1)
 
         self.status_label = QLabel("Adicione os arquivos e escolha a pasta principal.")
@@ -213,7 +237,7 @@ class DistribuidorDocumentosWindow(QDialog):
         self.table.setRowCount(len(self.analysis.items))
         problems = 0
         for row, item in enumerate(self.analysis.items):
-            folder = str(item.destination.parent) if item.destination else ""
+            destination = str(item.destination) if item.destination else ""
             status = "Pronto" if item.ready else item.error
             if not item.ready:
                 problems += 1
@@ -221,13 +245,12 @@ class DistribuidorDocumentosWindow(QDialog):
                 item.source.name,
                 item.document_type,
                 item.employee_name,
-                folder,
+                destination,
                 status,
             ]
             for column, value in enumerate(values):
                 cell = QTableWidgetItem(value)
-                if not item.ready:
-                    cell.setToolTip(item.error)
+                cell.setToolTip(value or item.error)
                 self.table.setItem(row, column, cell)
 
         self.move_button.setEnabled(self.analysis.ready)
