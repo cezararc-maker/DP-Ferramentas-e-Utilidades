@@ -86,6 +86,16 @@ Na categoria **Documentos**, a ferramenta **Distribuir documentos nas pastas de 
 
 Depois de escolher a pasta principal das rescisões, o programa identifica o nome do colaborador, procura a subpasta correspondente e apresenta todos os destinos para revisão. A movimentação é bloqueada se algum arquivo não for reconhecido, se a pasta não existir ou se houver mais de uma pasta possível. Arquivos já existentes não são substituídos: o novo recebe um sufixo numérico.
 
+## Criar atalho e fixar na barra de tarefas
+
+Após instalar ou atualizar o projeto, execute:
+
+```powershell
+.\scripts\criar-atalho.ps1
+```
+
+O script cria o atalho **DP - Ferramentas & Utilidades** na Área de Trabalho e no Menu Iniciar. Para fixá-lo, clique com o botão direito no atalho e selecione **Fixar na barra de tarefas**. A instalação pelo `scripts\instalar.ps1` também cria esses atalhos automaticamente.
+
 ## Gerar o executável
 
 ```powershell
