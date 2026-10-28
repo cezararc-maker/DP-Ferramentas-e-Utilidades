@@ -67,6 +67,23 @@
       "target": "seguro-desemprego",
       "status": "Novo",
       "icon": "SD"
+    },
+    {
+      "id": "distribuidor-documentos-rescisao",
+      "name": "Distribuir documentos nas pastas de rescisão",
+      "description": "Identifica Extratos FGTS e Consultas do Consignado em PDF ou CSV e move cada arquivo para a pasta do colaborador após revisão.",
+      "category": "Documentos",
+      "kind": "internal",
+      "target": "distribuir-documentos-rescisao",
+      "status": "Disponível",
+      "icon": "DOC",
+      "tags": [
+        "rescisão",
+        "FGTS",
+        "consignado",
+        "documentos",
+        "distribuir"
+      ]
     }
   ]
 }
