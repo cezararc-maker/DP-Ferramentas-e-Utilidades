@@ -638,8 +638,22 @@ QScrollArea { background: transparent; }
 """
 
 
+def configure_windows_app_id() -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "CONTALEX.DP.FerramentasUtilidades"
+        )
+    except (AttributeError, OSError):
+        logging.exception("Não foi possível configurar a identidade do aplicativo no Windows.")
+
+
 def main() -> int:
     configure_logging()
+    configure_windows_app_id()
     app = QApplication(sys.argv)
     app.setApplicationName(APP_FOLDER)
     app.setFont(QFont("Segoe UI", 10))
