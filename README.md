@@ -94,7 +94,7 @@ Após instalar ou atualizar o projeto, execute:
 .\scripts\criar-atalho.ps1
 ```
 
-O script cria o atalho **DP - Ferramentas & Utilidades** na Área de Trabalho e no Menu Iniciar. Para fixá-lo, clique com o botão direito no atalho e selecione **Fixar na barra de tarefas**. A instalação pelo `scripts\instalar.ps1` também cria esses atalhos automaticamente.
+O script gera um inicializador nativo chamado `DP_Ferramentas_Utilidades.exe` em `%LOCALAPPDATA%\\DP Ferramentas e Utilidades` e cria atalhos para ele na Área de Trabalho e no Menu Iniciar. O atalho não aponta mais para o Python.\n\nSe houver um atalho Python antigo fixado, desafixe-o. Depois, clique com o botão direito no novo atalho **DP - Ferramentas & Utilidades** e selecione **Fixar na barra de tarefas**. A instalação pelo `scripts\\instalar.ps1` também recria o inicializador e os atalhos automaticamente.
 
 ## Gerar o executável
 
