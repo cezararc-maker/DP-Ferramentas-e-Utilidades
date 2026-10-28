@@ -66,6 +66,7 @@ def test_existing_user_catalog_receives_new_bundled_tools_without_losing_custom(
 
     assert "custom" in ids
     assert "seguro-desemprego-organizador" in ids
+    assert "distribuidor-documentos-rescisao" in ids
 
 
 def test_existing_fgts_entries_are_updated_without_touching_others(monkeypatch, tmp_path):

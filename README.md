@@ -75,6 +75,17 @@ Na primeira execução, os catálogos serão copiados para:
 %APPDATA%\DP Ferramentas e Utilidades\projects.json
 ```
 
+
+## Distribuição de documentos nas pastas de rescisão
+
+Na categoria **Documentos**, a ferramenta **Distribuir documentos nas pastas de rescisão** recebe vários arquivos por arrastar e soltar ou pelo seletor. Ela aceita:
+
+- Extrato de FGTS em PDF;
+- Consulta de garantias do Consignado em PDF;
+- Consulta de garantias do Consignado em CSV.
+
+Depois de escolher a pasta principal das rescisões, o programa identifica o nome do colaborador, procura a subpasta correspondente e apresenta todos os destinos para revisão. A movimentação é bloqueada se algum arquivo não for reconhecido, se a pasta não existir ou se houver mais de uma pasta possível. Arquivos já existentes não são substituídos: o novo recebe um sufixo numérico.
+
 ## Gerar o executável
 
 ```powershell

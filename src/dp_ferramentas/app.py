@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from .catalog import APP_FOLDER, load_projects, load_tools, user_config_path, user_projects_path
+from .distribuidor_documentos_ui import DistribuidorDocumentosWindow
 from .launcher import (
     local_git_snapshot,
     open_documentation,
@@ -281,6 +282,7 @@ class MainWindow(QMainWindow):
         self.category = "Início"
         self.dark_theme = True
         self.seguro_desemprego_window: SeguroDesempregoWindow | None = None
+        self.distribuidor_documentos_window: DistribuidorDocumentosWindow | None = None
         self.setWindowTitle("DP - Ferramentas & Utilidades")
         self.resize(1240, 800)
         root = QWidget()
@@ -492,16 +494,25 @@ class MainWindow(QMainWindow):
     def launch(self, tool: ToolDefinition) -> None:
         try:
             if tool.kind == "internal":
-                if tool.target != "seguro-desemprego":
+                if tool.target == "seguro-desemprego":
+                    if self.seguro_desemprego_window is None:
+                        self.seguro_desemprego_window = SeguroDesempregoWindow(self)
+                        self.seguro_desemprego_window.destroyed.connect(
+                            lambda: setattr(self, "seguro_desemprego_window", None)
+                        )
+                    window = self.seguro_desemprego_window
+                elif tool.target == "distribuir-documentos-rescisao":
+                    if self.distribuidor_documentos_window is None:
+                        self.distribuidor_documentos_window = DistribuidorDocumentosWindow(self)
+                        self.distribuidor_documentos_window.destroyed.connect(
+                            lambda: setattr(self, "distribuidor_documentos_window", None)
+                        )
+                    window = self.distribuidor_documentos_window
+                else:
                     raise ValueError(f"Ferramenta interna não suportada: {tool.target}")
-                if self.seguro_desemprego_window is None:
-                    self.seguro_desemprego_window = SeguroDesempregoWindow(self)
-                    self.seguro_desemprego_window.destroyed.connect(
-                        lambda: setattr(self, "seguro_desemprego_window", None)
-                    )
-                self.seguro_desemprego_window.show()
-                self.seguro_desemprego_window.raise_()
-                self.seguro_desemprego_window.activateWindow()
+                window.show()
+                window.raise_()
+                window.activateWindow()
                 return
             if not target_exists(tool):
                 raise FileNotFoundError(f"Não encontrei o caminho configurado:\n{tool.expanded_target}")
