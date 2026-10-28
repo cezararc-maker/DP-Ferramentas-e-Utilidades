@@ -55,7 +55,7 @@ def _pdf_text(path: Path) -> str:
 
 def _extract_fgts_name(text: str) -> str:
     match = re.search(
-        r"\bNome\s*:\s*(.+?)(?=\s+(?:PIS|PASEP|NIT)\s*[:\-])",
+        r"\bNome\s*:\s*(.+?)(?=\s+(?:PIS/PASEP/NIT|PIS|PASEP|NIT)\s*[:\-])",
         text,
         re.IGNORECASE | re.DOTALL,
     )
