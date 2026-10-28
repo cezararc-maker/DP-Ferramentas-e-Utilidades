@@ -86,6 +86,20 @@ Na categoria **Documentos**, a ferramenta **Distribuir documentos nas pastas de 
 
 Depois de escolher a pasta principal das rescisões, o programa identifica o nome do colaborador, procura a subpasta correspondente e apresenta todos os destinos para revisão. A movimentação é bloqueada se algum arquivo não for reconhecido, se a pasta não existir ou se houver mais de uma pasta possível. Arquivos já existentes não são substituídos: o novo recebe um sufixo numérico.
 
+## Uso pelo arquivo BAT
+
+O arquivo `DISTRIBUIR_DOCUMENTOS_RESCISAO.bat`, localizado na pasta principal do projeto, permite executar somente a distribuição dos documentos sem abrir a interface completa.
+
+1. coloque todos os Extratos FGTS e Consultas do Consignado em uma pasta;
+2. abra o BAT e informe essa pasta;
+3. informe a pasta principal das rescisões, que contém as subpastas dos colaboradores;
+4. confira na tela o arquivo, o tipo, o nome completo e o destino;
+5. digite `MOVER` somente se todos os destinos estiverem corretos.
+
+A busca aceita correspondência exata e também nomes equivalentes quando a única diferença é `DE`, `DA`, `DO`, `DAS` ou `DOS`. Se um documento não for reconhecido, uma pasta não existir ou houver mais de uma pasta possível, nenhum arquivo será movido.
+
+Também é possível arrastar a pasta dos documentos sobre o BAT; nesse caso, será necessário informar apenas a pasta principal das rescisões.
+
 ## Criar atalho e fixar na barra de tarefas
 
 Após instalar ou atualizar o projeto, execute:
